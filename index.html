@@ -29,7 +29,6 @@
     transition: background 3s ease;
   }
 
-  /* Время суток */
   body.time-day { background: linear-gradient(135deg, #0a1929 0%, #1a3a52 50%, #0d2842 100%); }
   body.time-sunset { background: linear-gradient(135deg, #1a1035 0%, #4a2545 40%, #7d3c5a 70%, #2a1525 100%); }
   body.time-night { background: linear-gradient(135deg, #050a14 0%, #0a1525 50%, #050810 100%); }
@@ -90,7 +89,6 @@
   }
   @keyframes shine { to { background-position: 200% center; } }
 
-  /* Таймер */
   .timer-container {
     display: flex; justify-content: center; align-items: center;
     margin-bottom: 20px; gap: 20px; flex-wrap: wrap;
@@ -151,7 +149,6 @@
   .timer-status.enemy-turn { border-color: #ff6b6b; color: #ff6b6b; box-shadow: 0 0 20px rgba(255,107,107,0.4); }
   .timer-status.waiting { border-color: #ffa726; color: #ffa726; }
 
-  /* Статус */
   .status-panel {
     text-align: center; margin-bottom: 20px; padding: 15px 30px;
     background: rgba(79,195,247,0.1);
@@ -255,9 +252,7 @@
     pointer-events: none; z-index: 2; display: block;
   }
 
-  /* ============================================================
-     🔥 ПОПАДАНИЕ — ГОРИТ ТОЛЬКО ЭТА КЛЕТКА
-     ============================================================ */
+  /* Попадание */
   .cell.hit {
     background: linear-gradient(135deg, #ff6644, #cc2200) !important;
     z-index: 3;
@@ -298,7 +293,6 @@
     100% { opacity: 0; transform: scale(1.5); }
   }
 
-  /* Ударная волна */
   .shockwave {
     position: absolute;
     top: 50%; left: 50%;
@@ -314,7 +308,7 @@
     100% { transform: translate(-50%, -50%) scale(6); opacity: 0; border-width: 1px; }
   }
 
-  /* 🔥 Огонёк горит только пока корабль НЕ потоплен */
+  /* Огонёк на подбитой клетке */
   .burning-flame {
     position: absolute;
     bottom: 12%;
@@ -337,7 +331,6 @@
     100% { transform: translateX(-50%) scale(1.05) rotate(4deg); opacity: 0.9; }
   }
 
-  /* Искры, летящие вверх */
   .spark {
     position: absolute;
     width: 3px; height: 3px;
@@ -354,9 +347,7 @@
     100% { transform: translate(calc(-50% + var(--sx, 0px)), -50px) scale(0); opacity: 0; }
   }
 
-  /* ============================================================
-     🌊 ПОТОПЛЕННЫЙ КОРАБЛЬ — просто тёмный, без анимаций
-     ============================================================ */
+  /* Потопленный корабль */
   .cell.sunk {
     background: linear-gradient(135deg, #1a2a3a, #0a1520) !important;
     box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
@@ -369,13 +360,10 @@
     animation: none !important;
     transform: none !important;
   }
-  /* Никаких огоньков и пузырей на потопленных */
   .cell.sunk::before,
   .cell.sunk::after { display: none !important; }
 
-  /* ============================================================
-     💧 ПРОМАХ — реалистичные круги на воде
-     ============================================================ */
+  /* Промах */
   .cell.miss {
     background: linear-gradient(135deg, #0d2842 0%, #081a2c 100%);
     overflow: hidden;
@@ -634,9 +622,6 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ================================================================
-     МОБИЛЬНАЯ АДАПТАЦИЯ
-     ================================================================ */
   .rules-toggle {
     display: none; margin-top: 10px;
     font-size: 0.9em; padding: 8px 16px;
@@ -764,9 +749,9 @@
       <li>Один игрок создаёт игру и получает код</li>
       <li>Он отправляет ссылку-приглашение другу</li>
       <li>Друг открывает ссылку и подключается</li>
+      <li>Работает из любой сети (Wi-Fi, мобильный)</li>
       <li>У каждого хода — таймер 45 секунд</li>
       <li>Не успел — ход переходит сопернику</li>
-      <li>Вокруг потопленных кораблей клетки зачёркиваются</li>
     </ul>
   </div>
   <button class="rules-toggle" onclick="toggleRules()">📖 Показать/скрыть правила</button>
@@ -893,6 +878,41 @@
 <div class="notification" id="notification"></div>
 
 <script>
+// ===================================================
+// НАДЁЖНАЯ КОНФИГУРАЦИЯ WebRTC
+// STUN + TURN — работает из любой сети
+// ===================================================
+const ICE_SERVERS = {
+  iceServers: [
+    // Google STUN — определяет публичный IP
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+
+    // OpenRelay TURN — релей, если P2P невозможен
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+
+    // Twilio STUN
+    { urls: 'stun:global.stun.twilio.com:3478' }
+  ],
+  iceCandidatePoolSize: 10
+};
+
 // ===================================================
 // ОПРЕДЕЛЕНИЕ ТИПА УСТРОЙСТВА
 // ===================================================
@@ -1027,9 +1047,6 @@ function playHitAnimation(cellEl, row, col) {
   }
 }
 
-// ===================================================
-// АНИМАЦИЯ ПРОМАХА
-// ===================================================
 function playMissAnimation(cellEl) {
   if (!cellEl) return;
   const drop = document.createElement('div');
@@ -1039,15 +1056,10 @@ function playMissAnimation(cellEl) {
   setTimeout(() => drop.remove(), 1200);
 }
 
-// ===================================================
-// 🔥 ДОБАВИТЬ ОГОНЁК ГОРЕНИЯ (только для подбитых, но не потопленных)
-// ===================================================
 function addBurningFlame(cellEl) {
   if (!cellEl) return;
-  // Если клетка уже sunk (потоплена) — не добавляем
   if (cellEl.classList.contains('sunk')) return;
 
-  // Убираем старый, если есть
   const old = cellEl.querySelector('.burning-flame');
   if (old) old.remove();
   cellEl.querySelectorAll('.spark').forEach(el => el.remove());
@@ -1066,15 +1078,11 @@ function addBurningFlame(cellEl) {
   }
 }
 
-// Убрать огонь (для потопленных клеток)
 function removeBurningFlame(cellEl) {
   if (!cellEl) return;
   cellEl.querySelectorAll('.burning-flame, .spark').forEach(el => el.remove());
 }
 
-// ===================================================
-// СЛОУ-МО
-// ===================================================
 function enterSlowmo() { document.body.classList.add('slowmo'); }
 function exitSlowmo() { document.body.classList.remove('slowmo'); }
 function triggerSlowmo(duration = 1500) {
@@ -1358,7 +1366,9 @@ const G = {
   phase: 'placement', turn: 'waiting',
   myBoard: null, myShots: null, enemyShots: null, enemyRevealed: null, enemyBlocked: null,
   ships: [], shipQueue: [], currentShipIdx: 0, horizontal: true,
-  iAmReady: false, enemyReady: false, waitingForResult: false
+  iAmReady: false, enemyReady: false, waitingForResult: false,
+  // Таймаут подключения к хосту (на случай, если не удалось)
+  connectionTimeoutId: null
 };
 
 function emptyBoard() {
@@ -1724,7 +1734,6 @@ function renderMyBoard(preview = null) {
     }
   }
 
-  // 🔥 Добавляем огоньки на подбитые, но НЕ потопленные корабли
   requestAnimationFrame(() => {
     for (let r = 0; r < BOARD_SIZE; r++) {
       for (let c = 0; c < BOARD_SIZE; c++) {
@@ -1788,7 +1797,6 @@ function renderEnemyBoard() {
     }
   }
 
-  // 🔥 Добавляем огоньки на подбитые, но НЕ потопленные клетки
   requestAnimationFrame(() => {
     for (let r = 0; r < BOARD_SIZE; r++) {
       for (let c = 0; c < BOARD_SIZE; c++) {
@@ -1827,6 +1835,7 @@ function log(...args) { console.log('[SeaBattle]', ...args); }
 // ===================================================
 function backToMenu() {
   TurnTimer.stop();
+  if (G.connectionTimeoutId) { clearTimeout(G.connectionTimeoutId); G.connectionTimeoutId = null; }
   try { if (G.conn) G.conn.close(); } catch(e){}
   try { if (G.peer) G.peer.destroy(); } catch(e){}
   G.conn = null; G.peer = null; G.connected = false;
@@ -1856,6 +1865,9 @@ function generateRoomCode() {
   return code;
 }
 
+// ===================================================
+// СОЗДАНИЕ КОМНАТЫ (ХОСТ)
+// ===================================================
 function createRoom() {
   roomCode = generateRoomCode();
   G.isHost = true;
@@ -1867,15 +1879,15 @@ function createRoom() {
   $('waitingText').textContent = '⏳ Инициализация сервера...';
 
   const peerId = 'seabattle-' + roomCode;
+
+  // 🔧 Хост тоже получает полную конфигурацию STUN + TURN
   G.peer = new Peer(peerId, {
     debug: 1,
-    config: { iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:global.stun.twilio.com:3478' }
-    ]}
+    config: ICE_SERVERS
   });
 
-  G.peer.on('open', () => {
+  G.peer.on('open', (id) => {
+    log('Host peer открыт:', id);
     $('waitingText').textContent = '⏳ Ожидание подключения друга...';
   });
 
@@ -1883,19 +1895,39 @@ function createRoom() {
     if (G.conn && G.conn.open) { connection.close(); return; }
     G.conn = connection;
     setupConnection();
+
     G.conn.on('open', () => {
       showNotification('🎉 Друг подключился!');
       Sound.playNotify();
       setTimeout(() => startGame(), 800);
     });
+
+    G.conn.on('error', (err) => {
+      console.error('Соединение с гостем:', err);
+    });
   });
 
   G.peer.on('error', (err) => {
-    if (err.type === 'unavailable-id') createRoom();
-    else $('waitingText').textContent = '❌ Ошибка: ' + err.type;
+    console.error('Peer (host) error:', err);
+    if (err.type === 'unavailable-id') {
+      // ID занят — генерируем новый код
+      createRoom();
+    } else if (err.type === 'network') {
+      $('waitingText').textContent = '⚠️ Ошибка сети. Проверьте интернет.';
+    } else {
+      $('waitingText').textContent = '❌ Ошибка: ' + err.type;
+    }
+  });
+
+  G.peer.on('disconnected', () => {
+    log('Host peer disconnected — пытаюсь переподключиться...');
+    try { G.peer.reconnect(); } catch(e){}
   });
 }
 
+// ===================================================
+// ПОДКЛЮЧЕНИЕ (ГОСТЬ)
+// ===================================================
 function joinGame() {
   const code = $('joinCodeInput').value.trim().toUpperCase();
   const errEl = $('joinError');
@@ -1907,43 +1939,69 @@ function joinGame() {
 
   try { if (G.peer) G.peer.destroy(); } catch(e){}
 
+  // 🔧 Гость тоже получает полную конфигурацию STUN + TURN
   G.peer = new Peer({
     debug: 1,
-    config: { iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:global.stun.twilio.com:3478' }
-    ]}
+    config: ICE_SERVERS
   });
 
   let failed = false;
-  G.peer.on('open', () => {
+
+  G.peer.on('open', (id) => {
+    log('Guest peer открыт:', id);
     const hostId = 'seabattle-' + code;
-    G.conn = G.peer.connect(hostId, { reliable: true });
+    G.conn = G.peer.connect(hostId, {
+      reliable: true,
+      serialization: 'json'
+    });
+
     G.conn.on('open', () => {
       failed = false;
+      if (G.connectionTimeoutId) { clearTimeout(G.connectionTimeoutId); G.connectionTimeoutId = null; }
       setupConnection();
       showNotification('✅ Подключено!');
       Sound.playNotify();
       setTimeout(() => startGame(), 600);
     });
+
+    G.conn.on('error', (err) => {
+      console.error('Connection error:', err);
+    });
   });
 
   G.peer.on('error', (err) => {
+    console.error('Peer (guest) error:', err);
     if (failed) return;
     failed = true;
-    if (err.type === 'peer-unavailable') errEl.textContent = '❌ Комната не найдена.';
-    else errEl.textContent = '❌ Ошибка: ' + err.type;
+    if (err.type === 'peer-unavailable') {
+      errEl.textContent = '❌ Комната не найдена. Проверьте код.';
+    } else if (err.type === 'network') {
+      errEl.textContent = '⚠️ Ошибка сети. Проверьте интернет.';
+    } else if (err.type === 'browser-incompatible') {
+      errEl.textContent = '❌ Ваш браузер не поддерживает WebRTC.';
+    } else {
+      errEl.textContent = '❌ Ошибка: ' + err.type;
+    }
   });
 
-  setTimeout(() => {
+  G.peer.on('disconnected', () => {
+    log('Guest peer disconnected — пытаюсь переподключиться...');
+    try { G.peer.reconnect(); } catch(e){}
+  });
+
+  // Таймаут — если за 25 секунд не подключились
+  G.connectionTimeoutId = setTimeout(() => {
     if (!G.conn || !G.conn.open) {
       if (!failed && errEl.textContent === '🔄 Подключение...') {
-        errEl.textContent = '❌ Превышено время ожидания.';
+        errEl.textContent = '❌ Превышено время ожидания. Возможно, хост не в сети или неверный код.';
       }
     }
-  }, 15000);
+  }, 25000);
 }
 
+// ===================================================
+// СОЕДИНЕНИЕ
+// ===================================================
 function setupConnection() {
   G.connected = true;
   connDot.classList.add('online');
@@ -2275,17 +2333,14 @@ function handleEnemyShot(r, c) {
       setTimeout(() => {
         Sound.playSunk();
         vibrate([100, 50, 100, 50, 200]);
-        // Убираем огоньки со ВСЕХ клеток этого корабля
         const cells = getShipCells(G.myBoard, r, c);
         cells.forEach(([sr, sc]) => {
           const el = getCellEl(myBoardEl, sr, sc);
           if (el) removeBurningFlame(el);
         });
-        // Перерисовываем — они станут sunk (тёмными, без огня)
         renderMyBoard();
       }, 200);
     } else {
-      // Не потоплен — добавим огонёк в эту клетку
       setTimeout(() => { if (cellEl) addBurningFlame(cellEl); }, 100);
     }
 
@@ -2343,12 +2398,10 @@ function handleShotResult(r, c, hit, sunk, win) {
       setTimeout(() => {
         Sound.playSunk();
         vibrate([100, 50, 100, 50, 200]);
-        // Убираем огоньки со ВСЕХ клеток этого корабля
         cells.forEach(([sr, sc]) => {
           const el = getCellEl(enemyBoardEl, sr, sc);
           if (el) removeBurningFlame(el);
         });
-        // Перерисовка — они станут sunk
         renderEnemyBoard();
       }, 250);
       showNotification('🔥 КОРАБЛЬ ПОТОПЛЕН!');
