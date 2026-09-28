@@ -101,7 +101,6 @@
     padding: 5px; border-radius: 10px;
     position: relative;
   }
-  /* Анимированные блики воды на фоне поля */
   .board::before {
     content: '';
     position: absolute; inset: 5px;
@@ -133,28 +132,23 @@
     box-shadow: 0 0 20px rgba(255,213,79,1);
   }
 
-  /* ===== РИСУНКИ КОРАБЛЕЙ ===== */
+  /* ===== КОРАБЛИ (CANVAS) ===== */
   .cell.ship {
-    background: rgba(10,30,50,0.5);
+    background: rgba(10,30,50,0.3);
     padding: 0;
     z-index: 2;
   }
 
-  .cell.ship .ship-svg {
+  .ship-canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
-    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.7));
-    transition: filter 0.3s ease;
+    z-index: 2;
+    display: block;
   }
 
-  .cell.ship:hover .ship-svg {
-    filter: drop-shadow(0 0 8px rgba(255,213,79,0.9));
-  }
-
-  /* Превью при расстановке */
   .cell.preview-valid {
     background: rgba(102,187,106,0.5) !important;
     box-shadow: inset 0 0 15px rgba(102,187,106,0.8);
@@ -170,9 +164,8 @@
     animation: explode 0.6s ease-out;
     z-index: 3;
   }
-  .cell.hit .ship-svg {
-    filter: brightness(0.3) drop-shadow(0 0 10px #ff6600) saturate(3);
-    opacity: 0.6;
+  .cell.hit .ship-canvas {
+    filter: brightness(0.4) saturate(2) drop-shadow(0 0 5px #ff4400);
   }
   .cell.hit::before {
     content: '💥';
@@ -213,7 +206,7 @@
     background: linear-gradient(135deg, #4a0000, #1a0000) !important;
     box-shadow: inset 0 0 20px #ff0000;
   }
-  .cell.sunk .ship-svg {
+  .cell.sunk .ship-canvas {
     filter: brightness(0.15) contrast(1.8) drop-shadow(0 0 4px #ff0000);
   }
   .cell.sunk::after {
@@ -583,7 +576,7 @@ const Sound = {
     osc.stop(t + duration + 0.05);
   },
 
-  noise(duration, volume = 0.3, filterFreq = 1000, delay = 0, filterType = 'lowpass') {
+  noise(duration, volume = 0.3, filterFreq = 1000, delay = 0, filterType = 'lowpass', Q = 1) {
     if (!this.enabled || !this.ctx) return;
     const t = this.ctx.currentTime + delay;
     const bufferSize = Math.max(1, Math.floor(this.ctx.sampleRate * duration));
@@ -595,6 +588,7 @@ const Sound = {
     const filter = this.ctx.createBiquadFilter();
     filter.type = filterType;
     filter.frequency.setValueAtTime(filterFreq, t);
+    filter.Q.value = Q;
     const gain = this.ctx.createGain();
     gain.gain.setValueAtTime(volume, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
@@ -605,44 +599,86 @@ const Sound = {
     source.stop(t + duration);
   },
 
+  // ============================================
+  // ЗВУК ВЫСТРЕЛА
+  // ============================================
   playShoot() {
     this.init();
-    this.sweep(800, 200, 0.15, 'square', 0.15);
-    this.noise(0.1, 0.08, 2000, 0, 'highpass');
+    // Резкий "пиу" выстрела из пушки
+    this.sweep(900, 150, 0.2, 'square', 0.15);
+    this.noise(0.15, 0.12, 2500, 0, 'highpass', 0.7);
+    // Гул орудия
+    this.tone(180, 0.15, 'sawtooth', 0.1, 0.02);
   },
+
+  // ============================================
+  // ЗВУК ВЗРЫВА (попадание)
+  // ============================================
   playHit() {
     this.init();
-    this.tone(80, 0.5, 'sawtooth', 0.35);
-    this.tone(120, 0.4, 'square', 0.2, 0.02);
-    this.noise(0.4, 0.3, 400);
+    // 1. Оглушительный бас — сердце взрыва
+    this.tone(55, 0.8, 'sine', 0.6, 0);
+    this.tone(40, 1.0, 'sine', 0.5, 0.02);
+    // 2. Средние частоты — "тело" взрыва
+    this.tone(90, 0.5, 'sawtooth', 0.35, 0.01);
+    this.tone(130, 0.4, 'square', 0.2, 0.05);
+    // 3. Высокий треск — осколки
+    this.sweep(2000, 200, 0.35, 'square', 0.12, 0.01);
+    // 4. Шум — разрушение
+    this.noise(0.6, 0.4, 800, 0, 'lowpass', 1.5);
+    this.noise(0.3, 0.25, 3000, 0.05, 'highpass', 0.5);
+    // 5. Гул после взрыва (эхо)
+    this.tone(45, 1.2, 'sine', 0.2, 0.3);
+    this.tone(35, 1.5, 'sine', 0.15, 0.5);
   },
+
+  // ============================================
+  // ЗВУК БОЛЬШОГО ВЗРЫВА (потопление корабля)
+  // ============================================
+  playSunk() {
+    this.init();
+    // Каскад взрывов
+    for (let i = 0; i < 4; i++) {
+      const delay = i * 0.08;
+      this.tone(50 + Math.random() * 30, 0.7, 'sine', 0.45, delay);
+      this.noise(0.5, 0.3, 700 + i * 200, delay, 'lowpass', 1.8);
+    }
+    // Финальный мощный бум
+    this.tone(35, 1.5, 'sine', 0.55, 0.35);
+    this.tone(60, 1.2, 'sawtooth', 0.3, 0.35);
+    this.noise(1.2, 0.35, 500, 0.35, 'lowpass', 1.5);
+    // Долгий низкий гул-эхо
+    this.tone(28, 2.5, 'sine', 0.25, 0.6);
+    this.tone(38, 2.0, 'sine', 0.2, 0.8);
+    // Высокие "звенящие" после взрыва
+    this.tone(1800, 0.4, 'sine', 0.08, 0.4);
+    this.tone(2400, 0.5, 'sine', 0.06, 0.5);
+  },
+
+  // Промах — всплеск воды (без изменений)
   playMiss() {
     this.init();
     this.sweep(1200, 400, 0.3, 'sine', 0.15);
-    this.noise(0.25, 0.15, 1500, 0.05, 'bandpass');
+    this.noise(0.25, 0.15, 1500, 0.05, 'bandpass', 0.7);
   },
-  playSunk() {
-    this.init();
-    this.tone(523.25, 0.6, 'sine', 0.25, 0);
-    this.tone(659.25, 0.6, 'sine', 0.25, 0.08);
-    this.tone(783.99, 0.6, 'sine', 0.25, 0.16);
-    this.tone(1046.5, 0.8, 'sine', 0.3, 0.24);
-    this.noise(0.5, 0.2, 300, 0.1);
-  },
+
   playReady() {
     this.init();
     this.tone(660, 0.15, 'sine', 0.2, 0);
     this.tone(880, 0.25, 'sine', 0.25, 0.12);
   },
+
   playNotify() {
     this.init();
     this.tone(1200, 0.15, 'sine', 0.15);
     this.tone(1600, 0.2, 'sine', 0.12, 0.08);
   },
+
   playClick() {
     this.init();
     this.tone(1400, 0.05, 'sine', 0.08);
   },
+
   playVictory() {
     this.init();
     const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
@@ -651,6 +687,7 @@ const Sound = {
     this.tone(1318.5, 1.2, 'sine', 0.25, 0.8);
     this.tone(1567.98, 1.2, 'sine', 0.2, 0.8);
   },
+
   playDefeat() {
     this.init();
     const notes = [523.25, 466.16, 415.3, 349.23];
@@ -658,6 +695,7 @@ const Sound = {
     this.tone(261.63, 1.5, 'sine', 0.3, 0.8);
     this.tone(196, 1.5, 'sine', 0.25, 0.8);
   },
+
   startMusic() {
     if (!this.enabled) return;
     this.init();
@@ -757,115 +795,6 @@ function emptyBoard() {
 }
 
 // ===================================================
-// ГЕНЕРАТОР SVG-КОРАБЛЕЙ
-// ===================================================
-// Каждый корабль рисуется как SVG в viewBox 100x100
-// Каждая палуба знает свою роль: nose / middle / tail / single
-
-function shipPalette(size) {
-  // Разные цвета по размеру (чем больше — тем солиднее)
-  switch (size) {
-    case 1: return { hull: '#c7d1d8', hullTop: '#e8eef2', deck: '#8fa3b0', line: '#5a6f7d', cabin: '#4fc3f7' };
-    case 2: return { hull: '#a5d6a7', hullTop: '#c8e6c9', deck: '#66bb6a', line: '#2e7d32', cabin: '#a5d6a7' };
-    case 3: return { hull: '#90caf9', hullTop: '#bbdefb', deck: '#42a5f5', line: '#1565c0', cabin: '#ffd54f' };
-    case 4: return { hull: '#ffcc80', hullTop: '#ffe0b2', deck: '#ffa726', line: '#e65100', cabin: '#ff7043' };
-    default: return { hull: '#c7d1d8', hullTop: '#e8eef2', deck: '#8fa3b0', line: '#5a6f7d', cabin: '#4fc3f7' };
-  }
-}
-
-function shipSVG(size, role, horizontal, id) {
-  const p = shipPalette(size);
-  const rotate = horizontal ? '' : 'transform="rotate(90 50 50)"';
-
-  // Общие параметры корпуса
-  // Рисуем так, чтобы корабль занимал центр клетки и плавно переходил в соседнюю.
-  // У нас будет корпус по оси X — от края к краю, роль определяет форму левого/правого борта.
-  // - nose: острый или округлый левый край
-  // - tail: ровный или округлый правый край
-  // - middle: ровный по обоим краям
-  // - single: округлый по обоим краям
-
-  let hullPath;
-  const hullColor = p.hull;
-  const deckColor = p.deck;
-  const lineColor = p.line;
-  const cabinColor = p.cabin;
-
-  // Корпус: горизонтальная полоса по центру (y от 25 до 75)
-  // Левый край: если nose — точка, если middle/tail — прямая линия
-  // Правый край: если tail — прямая линия или округлость, если nose/middle — прямая (склеится с соседом)
-
-  if (role === 'single') {
-    // Катер — овальный
-    hullPath = `M 15,50 Q 15,25 40,25 L 60,25 Q 85,25 85,50 Q 85,75 60,75 L 40,75 Q 15,75 15,50 Z`;
-  } else if (role === 'nose') {
-    // Нос — острый слева, ровный справа
-    hullPath = `M 5,50 Q 5,35 20,30 L 100,25 L 100,75 L 20,70 Q 5,65 5,50 Z`;
-  } else if (role === 'tail') {
-    // Корма — ровный слева, округлый справа
-    hullPath = `M 0,25 L 80,25 Q 95,30 95,50 Q 95,70 80,75 L 0,75 Z`;
-  } else {
-    // Середина — ровная с обоих краёв
-    hullPath = `M 0,25 L 100,25 L 100,75 L 0,75 Z`;
-  }
-
-  // Верхняя палуба (светлая полоса поверх корпуса)
-  let deckPath;
-  if (role === 'single') {
-    deckPath = `M 30,50 Q 30,38 45,38 L 55,38 Q 70,38 70,50 Q 70,62 55,62 L 45,62 Q 30,62 30,50 Z`;
-  } else if (role === 'nose') {
-    deckPath = `M 15,50 Q 15,42 25,40 L 100,38 L 100,62 L 25,60 Q 15,58 15,50 Z`;
-  } else if (role === 'tail') {
-    deckPath = `M 0,38 L 78,38 Q 88,40 88,50 Q 88,60 78,62 L 0,62 Z`;
-  } else {
-    deckPath = `M 0,38 L 100,38 L 100,62 L 0,62 Z`;
-  }
-
-  // Кабина (в центре сегмента)
-  let cabin = '';
-  if (role === 'single') {
-    cabin = `<circle cx="50" cy="50" r="8" fill="${cabinColor}" stroke="${lineColor}" stroke-width="2"/>
-             <circle cx="50" cy="50" r="3" fill="${lineColor}"/>`;
-  } else if (role === 'nose') {
-    cabin = `<rect x="55" y="42" width="18" height="16" rx="2" fill="${cabinColor}" stroke="${lineColor}" stroke-width="1.5"/>
-             <circle cx="40" cy="50" r="3" fill="${lineColor}"/>`;
-  } else if (role === 'tail') {
-    cabin = `<rect x="35" y="42" width="18" height="16" rx="2" fill="${cabinColor}" stroke="${lineColor}" stroke-width="1.5"/>
-             <rect x="10" y="44" width="10" height="12" rx="1" fill="${lineColor}" opacity="0.6"/>`;
-  } else {
-    cabin = `<rect x="42" y="42" width="16" height="16" rx="2" fill="${cabinColor}" stroke="${lineColor}" stroke-width="1.5"/>`;
-  }
-
-  // Винт/след за кормой
-  let wake = '';
-  if (role === 'tail') {
-    wake = `<path d="M 95,50 Q 105,45 108,50 Q 105,55 95,50 Z" fill="rgba(255,255,255,0.4)" />`;
-  }
-
-  return `
-    <svg class="ship-svg" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <g ${rotate} style="transform-origin: 50px 50px;">
-        <!-- Тень-волна снизу -->
-        <ellipse cx="50" cy="80" rx="45" ry="5" fill="rgba(0,0,0,0.25)"/>
-
-        <!-- Корпус -->
-        <path d="${hullPath}" fill="${hullColor}" stroke="${lineColor}" stroke-width="2" stroke-linejoin="round"/>
-
-        <!-- Верхняя палуба -->
-        <path d="${deckPath}" fill="${deckColor}" opacity="0.9"/>
-
-        <!-- Кабина / деталь -->
-        ${cabin}
-
-        <!-- Обводка сверху для объёма -->
-        <path d="${hullPath}" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-      </g>
-      ${wake}
-    </svg>
-  `;
-}
-
-// ===================================================
 // DOM
 // ===================================================
 const $ = id => document.getElementById(id);
@@ -892,7 +821,351 @@ const connText = $('connText');
 })();
 
 // ===================================================
-// УТИЛИТЫ
+// РИСОВАНИЕ КОРАБЛЯ (Canvas)
+// ===================================================
+function shipPalette(size) {
+  switch (size) {
+    case 1: return { hull: '#c7d1d8', hullTop: '#e8eef2', deck: '#8fa3b0', line: '#5a6f7d', cabin: '#4fc3f7' };
+    case 2: return { hull: '#a5d6a7', hullTop: '#c8e6c9', deck: '#66bb6a', line: '#2e7d32', cabin: '#ffeb3b' };
+    case 3: return { hull: '#90caf9', hullTop: '#bbdefb', deck: '#42a5f5', line: '#1565c0', cabin: '#ffd54f' };
+    case 4: return { hull: '#ffcc80', hullTop: '#ffe0b2', deck: '#ffa726', line: '#e65100', cabin: '#ff7043' };
+    default: return { hull: '#c7d1d8', hullTop: '#e8eef2', deck: '#8fa3b0', line: '#5a6f7d', cabin: '#4fc3f7' };
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const p = shipPalette(size);
+
+  ctx.save();
+  ctx.translate(W/2, H/2);
+  if (!horizontal) ctx.rotate(Math.PI / 2);
+  ctx.translate(-W/2, -H/2);
+
+  const top = 4;
+  const bottom = H - 4;
+
+  // === КОРПУС ===
+  ctx.beginPath();
+  if (role === 'single') {
+    const r = H * 0.36;
+    roundRect(ctx, 4, top, W - 8, bottom - top, r);
+  } else if (role === 'nose') {
+    ctx.moveTo(-2, top + 10);
+    ctx.lineTo(W, top);
+    ctx.lineTo(W, bottom);
+    ctx.lineTo(-2, bottom - 10);
+    ctx.quadraticCurveTo(-10, H/2, -2, top + 10);
+    ctx.closePath();
+  } else if (role === 'tail') {
+    ctx.moveTo(0, top);
+    ctx.lineTo(W - 10, top);
+    ctx.quadraticCurveTo(W + 8, H/2, W - 10, bottom);
+    ctx.lineTo(0, bottom);
+    ctx.closePath();
+  } else {
+    ctx.rect(0, top, W, bottom - top);
+  }
+  ctx.fillStyle = p.hull;
+  ctx.fill();
+  ctx.strokeStyle = p.line;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // === ПАЛУБА ===
+  ctx.beginPath();
+  if (role === 'single') {
+    const r2 = H * 0.24;
+    roundRect(ctx, 14, top + 8, W - 28, bottom - top - 16, r2);
+  } else if (role === 'nose') {
+    ctx.moveTo(8, top + 8);
+    ctx.lineTo(W, top + 5);
+    ctx.lineTo(W, bottom - 5);
+    ctx.lineTo(8, bottom - 8);
+    ctx.quadraticCurveTo(0, H/2, 8, top + 8);
+    ctx.closePath();
+  } else if (role === 'tail') {
+    ctx.moveTo(0, top + 5);
+    ctx.lineTo(W - 14, top + 5);
+    ctx.quadraticCurveTo(W - 2, H/2, W - 14, bottom - 5);
+    ctx.lineTo(0, bottom - 5);
+    ctx.closePath();
+  } else {
+    ctx.rect(0, top + 5, W, bottom - top - 10);
+  }
+  ctx.fillStyle = p.deck;
+  ctx.fill();
+
+  // === КАБИНА / РУБКА ===
+  const cx = W / 2;
+  const cy = H / 2;
+
+  if (role === 'single') {
+    ctx.beginPath();
+    ctx.arc(cx, cy, H * 0.16, 0, Math.PI * 2);
+    ctx.fillStyle = p.cabin;
+    ctx.fill();
+    ctx.strokeStyle = p.line;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy, H * 0.06, 0, Math.PI * 2);
+    ctx.fillStyle = p.line;
+    ctx.fill();
+  } else if (role === 'nose') {
+    ctx.fillStyle = p.cabin;
+    ctx.fillRect(cx + 2, cy - 7, 14, 14);
+    ctx.strokeStyle = p.line;
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(cx + 2, cy - 7, 14, 14);
+    // Пушка на носу
+    ctx.beginPath();
+    ctx.arc(cx - 18, cy, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = p.line;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx - 18, cy);
+    ctx.lineTo(cx - 28, cy);
+    ctx.strokeStyle = p.line;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  } else if (role === 'tail') {
+    ctx.fillStyle = p.cabin;
+    ctx.fillRect(cx - 16, cy - 7, 14, 14);
+    ctx.strokeStyle = p.line;
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(cx - 16, cy - 7, 14, 14);
+    // Винт
+    ctx.beginPath();
+    ctx.moveTo(W - 4, cy - 5);
+    ctx.lineTo(W + 6, cy);
+    ctx.lineTo(W - 4, cy + 5);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(200,230,255,0.65)';
+    ctx.fill();
+  } else {
+    ctx.fillStyle = p.cabin;
+    ctx.fillRect(cx - 7, cy - 7, 14, 14);
+    ctx.strokeStyle = p.line;
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(cx - 7, cy - 7, 14, 14);
+  }
+
+  ctx.restore();
+
+  // === ФИЛЬТРЫ ===
+  if (isSunk) {
+    canvas.style.filter = 'brightness(0.2) contrast(1.8) drop-shadow(0 0 4px #ff0000)';
+  } else if (isHit) {
+    canvas.style.filter = 'brightness(0.45) saturate(2) drop-shadow(0 0 6px #ff6600)';
+  } else {
+    canvas.style.filter = 'drop-shadow(0 2px 3px rgba(0,0,0,0.55))';
+  }
+}
+
+// ===================================================
+// ОПРЕДЕЛЕНИЕ РОЛИ И РАЗМЕРА КОРАБЛЯ
+// ===================================================
+function getShipRole(board, r, c) {
+  const hasLeft  = c > 0 && board[r][c-1] === 1;
+  const hasRight = c < BOARD_SIZE-1 && board[r][c+1] === 1;
+  const hasUp    = r > 0 && board[r-1][c] === 1;
+  const hasDown  = r < BOARD_SIZE-1 && board[r+1][c] === 1;
+
+  const horiz = hasLeft || hasRight;
+  const vert  = hasUp || hasDown;
+
+  if (!horiz && !vert) return { role: 'single', horizontal: true };
+
+  if (horiz) {
+    if (!hasLeft)  return { role: 'nose',   horizontal: true };
+    if (!hasRight) return { role: 'tail',   horizontal: true };
+    return { role: 'middle', horizontal: true };
+  } else {
+    if (!hasUp)   return { role: 'nose',   horizontal: false };
+    if (!hasDown) return { role: 'tail',   horizontal: false };
+    return { role: 'middle', horizontal: false };
+  }
+}
+
+function getShipSize(board, r, c) {
+  const visited = new Set();
+  const stack = [[r, c]];
+  let count = 0;
+  while (stack.length) {
+    const [cr, cc] = stack.pop();
+    const key = cr + ',' + cc;
+    if (visited.has(key)) continue;
+    if (cr < 0 || cr >= BOARD_SIZE || cc < 0 || cc >= BOARD_SIZE) continue;
+    if (board[cr][cc] !== 1) continue;
+    visited.add(key);
+    count++;
+    stack.push([cr+1, cc], [cr-1, cc], [cr, cc+1], [cr, cc-1]);
+  }
+  return count;
+}
+
+// ===================================================
+// РЕНДЕР: МОЁ ПОЛЕ
+// ===================================================
+function renderMyBoard(preview = null) {
+  myBoardEl.innerHTML = '';
+
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+
+      if (G.myBoard[r][c] === 1) {
+        cell.classList.add('ship');
+        const size = getShipSize(G.myBoard, r, c);
+        const info = getShipRole(G.myBoard, r, c);
+        const isHit = G.enemyShots[r][c] === 2;
+        const isSunk = isHit && isSunkOnMyBoard(r, c);
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'ship-canvas';
+        canvas.width = 100;
+        canvas.height = 100;
+        cell.appendChild(canvas);
+        setTimeout(() => {
+          drawShipOnCanvas(canvas, size, info.role, info.horizontal, isSunk, isHit);
+        }, 0);
+      }
+
+      if (G.enemyShots[r][c] === 2) {
+        cell.classList.add('hit');
+        if (G.myBoard[r][c] === 1 && isSunkOnMyBoard(r, c)) cell.classList.add('sunk');
+      } else if (G.enemyShots[r][c] === 1) {
+        cell.classList.add('miss');
+      }
+
+      if (preview && G.phase === 'placement' && G.currentShipIdx < G.shipQueue.length) {
+        const { row, col, size, horizontal, valid } = preview;
+        let inPreview = false;
+        if (horizontal) {
+          if (r === row && c >= col && c < col + size) inPreview = true;
+        } else {
+          if (c === col && r >= row && r < row + size) inPreview = true;
+        }
+        if (inPreview && G.myBoard[r][c] !== 1) {
+          cell.classList.add(valid ? 'preview-valid' : 'preview-invalid');
+        }
+      }
+
+      if (G.phase === 'placement') {
+        cell.addEventListener('click', () => placeShipAt(r, c));
+        cell.addEventListener('mouseenter', () => hoverMy(r, c));
+        cell.addEventListener('mouseleave', () => renderMyBoard());
+      }
+
+      myBoardEl.appendChild(cell);
+    }
+  }
+}
+
+// ===================================================
+// РЕНДЕР: ПОЛЕ СОПЕРНИКА
+// ===================================================
+function renderEnemyBoard() {
+  enemyBoardEl.innerHTML = '';
+
+  const canShoot = G.phase === 'battle'
+                && G.turn === 'my-turn'
+                && !G.waitingForResult;
+
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+
+      const shot = G.myShots[r][c];
+
+      if (shot === 2 && G.enemyRevealed[r][c] === 1) {
+        cell.classList.add('ship');
+        const size = getShipSize(G.enemyRevealed, r, c);
+        const info = getShipRole(G.enemyRevealed, r, c);
+        const isSunk = isSunkOnEnemy(r, c);
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'ship-canvas';
+        canvas.width = 100;
+        canvas.height = 100;
+        cell.appendChild(canvas);
+        setTimeout(() => {
+          drawShipOnCanvas(canvas, size, info.role, info.horizontal, isSunk, true);
+        }, 0);
+      }
+
+      if (shot === 2) {
+        cell.classList.add('hit');
+        if (isSunkOnEnemy(r, c)) cell.classList.add('sunk');
+      } else if (shot === 1) {
+        cell.classList.add('miss');
+      } else {
+        if (canShoot) {
+          cell.classList.add('clickable');
+          cell.addEventListener('click', () => shootAt(r, c));
+        } else {
+          cell.classList.add('disabled');
+        }
+      }
+
+      enemyBoardEl.appendChild(cell);
+    }
+  }
+}
+
+// ===================================================
+// ПОТОПЛЕНИЕ
+// ===================================================
+function getShipCells(board, r, c) {
+  const visited = new Set();
+  const stack = [[r, c]];
+  const cells = [];
+  while (stack.length) {
+    const [cr, cc] = stack.pop();
+    const key = cr + ',' + cc;
+    if (visited.has(key)) continue;
+    if (cr < 0 || cr >= BOARD_SIZE || cc < 0 || cc >= BOARD_SIZE) continue;
+    if (board[cr][cc] !== 1) continue;
+    visited.add(key);
+    cells.push([cr, cc]);
+    stack.push([cr+1, cc], [cr-1, cc], [cr, cc+1], [cr, cc-1]);
+  }
+  return cells;
+}
+function isSunkOnMyBoard(r, c) {
+  const cells = getShipCells(G.myBoard, r, c);
+  return cells.every(([sr, sc]) => G.enemyShots[sr][sc] === 2);
+}
+function isSunkOnEnemy(r, c) {
+  const cells = getShipCells(G.enemyRevealed, r, c);
+  return cells.every(([sr, sc]) => G.myShots[sr][sc] === 2);
+}
+
+// ===================================================
+// УТИЛИТЫ UI
 // ===================================================
 function showNotification(text) {
   notification.textContent = text;
@@ -1120,179 +1393,6 @@ function initShipQueue() {
   const q = [];
   for (const s of SHIPS) for (let i = 0; i < s.count; i++) q.push(s.size);
   return q.sort((a, b) => b - a);
-}
-
-// ===================================================
-// КАКАЯ РОЛЬ У КЛЕТКИ КОРАБЛЯ (nose/middle/tail/single)
-// ===================================================
-function getShipRole(board, r, c) {
-  // Проверяем, часть какого корабля эта клетка.
-  // Идём влево и вправо / вверх и вниз
-  const hasLeft  = c > 0 && board[r][c-1] === 1;
-  const hasRight = c < BOARD_SIZE-1 && board[r][c+1] === 1;
-  const hasUp    = r > 0 && board[r-1][c] === 1;
-  const hasDown  = r < BOARD_SIZE-1 && board[r+1][c] === 1;
-
-  const horiz = hasLeft || hasRight;
-  const vert  = hasUp || hasDown;
-
-  if (!horiz && !vert) return { role: 'single', horizontal: true };
-
-  if (horiz) {
-    if (!hasLeft)  return { role: 'nose',   horizontal: true };
-    if (!hasRight) return { role: 'tail',   horizontal: true };
-    return { role: 'middle', horizontal: true };
-  } else {
-    if (!hasUp)   return { role: 'nose',   horizontal: false };
-    if (!hasDown) return { role: 'tail',   horizontal: false };
-    return { role: 'middle', horizontal: false };
-  }
-}
-
-function getShipSize(board, r, c) {
-  // Определяем размер корабля (обход всей клетки корабля)
-  const visited = new Set();
-  const stack = [[r, c]];
-  let count = 0;
-  while (stack.length) {
-    const [cr, cc] = stack.pop();
-    const key = cr + ',' + cc;
-    if (visited.has(key)) continue;
-    if (cr < 0 || cr >= BOARD_SIZE || cc < 0 || cc >= BOARD_SIZE) continue;
-    if (board[cr][cc] !== 1) continue;
-    visited.add(key);
-    count++;
-    stack.push([cr+1, cc], [cr-1, cc], [cr, cc+1], [cr, cc-1]);
-  }
-  return count;
-}
-
-// ===================================================
-// РЕНДЕР: МОЁ ПОЛЕ
-// ===================================================
-function renderMyBoard(preview = null) {
-  myBoardEl.innerHTML = '';
-
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.dataset.r = r;
-      cell.dataset.c = c;
-
-      if (G.myBoard[r][c] === 1) {
-        cell.classList.add('ship');
-        const size = getShipSize(G.myBoard, r, c);
-        const info = getShipRole(G.myBoard, r, c);
-        cell.innerHTML = shipSVG(size, info.role, info.horizontal, `${r}-${c}`);
-      }
-
-      // Попадание врага по мне
-      if (G.enemyShots[r][c] === 2) {
-        cell.classList.add('hit');
-        if (G.myBoard[r][c] === 1 && isSunkOnMyBoard(r, c)) {
-          cell.classList.add('sunk');
-        }
-      } else if (G.enemyShots[r][c] === 1) {
-        cell.classList.add('miss');
-      }
-
-      // Превью при расстановке
-      if (preview && G.phase === 'placement' && G.currentShipIdx < G.shipQueue.length) {
-        const { row, col, size, horizontal, valid } = preview;
-        let inPreview = false;
-        if (horizontal) {
-          if (r === row && c >= col && c < col + size) inPreview = true;
-        } else {
-          if (c === col && r >= row && r < row + size) inPreview = true;
-        }
-        if (inPreview && G.myBoard[r][c] !== 1) {
-          cell.classList.add(valid ? 'preview-valid' : 'preview-invalid');
-        }
-      }
-
-      if (G.phase === 'placement') {
-        cell.addEventListener('click', () => placeShipAt(r, c));
-        cell.addEventListener('mouseenter', () => hoverMy(r, c));
-        cell.addEventListener('mouseleave', () => renderMyBoard());
-      }
-
-      myBoardEl.appendChild(cell);
-    }
-  }
-}
-
-// ===================================================
-// РЕНДЕР: ПОЛЕ СОПЕРНИКА
-// ===================================================
-function renderEnemyBoard() {
-  enemyBoardEl.innerHTML = '';
-
-  const canShoot = G.phase === 'battle'
-                && G.turn === 'my-turn'
-                && !G.waitingForResult;
-
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.dataset.r = r;
-      cell.dataset.c = c;
-
-      const shot = G.myShots[r][c];
-
-      // Показываем рисунок корабля только на попаданиях и потопленных
-      if (shot === 2) {
-        cell.classList.add('hit');
-        if (G.enemyRevealed[r][c] === 1) {
-          const size = getShipSize(G.enemyRevealed, r, c);
-          const info = getShipRole(G.enemyRevealed, r, c);
-          cell.classList.add('ship');
-          cell.innerHTML = shipSVG(size, info.role, info.horizontal, `e-${r}-${c}`);
-          if (isSunkOnEnemy(r, c)) cell.classList.add('sunk');
-        }
-      } else if (shot === 1) {
-        cell.classList.add('miss');
-      } else {
-        if (canShoot) {
-          cell.classList.add('clickable');
-          cell.addEventListener('click', () => shootAt(r, c));
-        } else {
-          cell.classList.add('disabled');
-        }
-      }
-
-      enemyBoardEl.appendChild(cell);
-    }
-  }
-}
-
-// ===================================================
-// ПОТОПЛЕНИЕ
-// ===================================================
-function getShipCells(board, r, c) {
-  const visited = new Set();
-  const stack = [[r, c]];
-  const cells = [];
-  while (stack.length) {
-    const [cr, cc] = stack.pop();
-    const key = cr + ',' + cc;
-    if (visited.has(key)) continue;
-    if (cr < 0 || cr >= BOARD_SIZE || cc < 0 || cc >= BOARD_SIZE) continue;
-    if (board[cr][cc] !== 1) continue;
-    visited.add(key);
-    cells.push([cr, cc]);
-    stack.push([cr+1, cc], [cr-1, cc], [cr, cc+1], [cr, cc-1]);
-  }
-  return cells;
-}
-function isSunkOnMyBoard(r, c) {
-  const cells = getShipCells(G.myBoard, r, c);
-  return cells.every(([sr, sc]) => G.enemyShots[sr][sc] === 2);
-}
-function isSunkOnEnemy(r, c) {
-  const cells = getShipCells(G.enemyRevealed, r, c);
-  return cells.every(([sr, sc]) => G.myShots[sr][sc] === 2);
 }
 
 // ===================================================
