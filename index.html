@@ -12,10 +12,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
 
-  html, body {
-    overscroll-behavior: none;
-    touch-action: manipulation;
-  }
+  html, body { overscroll-behavior: none; touch-action: manipulation; }
 
   body {
     font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -32,21 +29,11 @@
     transition: background 3s ease;
   }
 
-  /* ============================================================
-     СМЕНА ВРЕМЕНИ СУТОК
-     ============================================================ */
-  body.time-day {
-    background: linear-gradient(135deg, #0a1929 0%, #1a3a52 50%, #0d2842 100%);
-  }
-  body.time-sunset {
-    background: linear-gradient(135deg, #1a1035 0%, #4a2545 40%, #7d3c5a 70%, #2a1525 100%);
-  }
-  body.time-night {
-    background: linear-gradient(135deg, #050a14 0%, #0a1525 50%, #050810 100%);
-  }
-  body.time-dawn {
-    background: linear-gradient(135deg, #142842 0%, #4a3d6b 50%, #8a6a7a 100%);
-  }
+  /* Время суток */
+  body.time-day { background: linear-gradient(135deg, #0a1929 0%, #1a3a52 50%, #0d2842 100%); }
+  body.time-sunset { background: linear-gradient(135deg, #1a1035 0%, #4a2545 40%, #7d3c5a 70%, #2a1525 100%); }
+  body.time-night { background: linear-gradient(135deg, #050a14 0%, #0a1525 50%, #050810 100%); }
+  body.time-dawn { background: linear-gradient(135deg, #142842 0%, #4a3d6b 50%, #8a6a7a 100%); }
 
   .time-indicator {
     position: fixed;
@@ -56,7 +43,6 @@
     z-index: 60;
     opacity: 0.7;
     pointer-events: none;
-    transition: opacity 0.5s;
     animation: time-fade 2s ease-in-out;
   }
   @keyframes time-fade {
@@ -104,42 +90,22 @@
   }
   @keyframes shine { to { background-position: 200% center; } }
 
-  /* ===== ТАЙМЕР ===== */
+  /* Таймер */
   .timer-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 20px;
-    gap: 20px;
-    flex-wrap: wrap;
+    display: flex; justify-content: center; align-items: center;
+    margin-bottom: 20px; gap: 20px; flex-wrap: wrap;
   }
-
   .timer-box {
-    position: relative;
-    width: 130px;
-    height: 130px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative; width: 130px; height: 130px;
+    display: flex; align-items: center; justify-content: center;
     transition: all 0.3s ease;
   }
-
   .timer-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    position: absolute; inset: 0; width: 100%; height: 100%;
     transform: rotate(-90deg);
   }
-
-  .timer-svg circle {
-    fill: none;
-    stroke-width: 8;
-    stroke-linecap: round;
-  }
-
+  .timer-svg circle { fill: none; stroke-width: 8; stroke-linecap: round; }
   .timer-bg-circle { stroke: rgba(79,195,247,0.15); }
-
   .timer-progress-circle {
     stroke: #4fc3f7;
     stroke-dasharray: 339.292;
@@ -147,90 +113,45 @@
     transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
     filter: drop-shadow(0 0 8px currentColor);
   }
-
-  .timer-inner {
-    position: relative;
-    z-index: 2;
-    text-align: center;
-  }
-
+  .timer-inner { position: relative; z-index: 2; text-align: center; }
   .timer-value {
-    font-size: 3em;
-    font-weight: bold;
-    line-height: 1;
+    font-size: 3em; font-weight: bold; line-height: 1;
     font-variant-numeric: tabular-nums;
-    color: #4fc3f7;
-    text-shadow: 0 0 20px rgba(79,195,247,0.7);
+    color: #4fc3f7; text-shadow: 0 0 20px rgba(79,195,247,0.7);
     transition: all 0.3s ease;
   }
-
   .timer-label {
-    font-size: 0.75em;
-    color: #b0d4e8;
-    letter-spacing: 2px;
-    margin-top: 4px;
-    text-transform: uppercase;
+    font-size: 0.75em; color: #b0d4e8;
+    letter-spacing: 2px; margin-top: 4px; text-transform: uppercase;
   }
-
   .timer-box.warning .timer-progress-circle { stroke: #ffa726; }
-  .timer-box.warning .timer-value {
-    color: #ffa726;
-    text-shadow: 0 0 20px rgba(255,167,38,0.7);
-  }
-
+  .timer-box.warning .timer-value { color: #ffa726; text-shadow: 0 0 20px rgba(255,167,38,0.7); }
   .timer-box.danger { animation: timer-danger-pulse 0.6s ease-in-out infinite; }
   .timer-box.danger .timer-progress-circle { stroke: #ff6b6b; }
-  .timer-box.danger .timer-value {
-    color: #ff6b6b;
-    text-shadow: 0 0 25px rgba(255,107,107,1);
-  }
+  .timer-box.danger .timer-value { color: #ff6b6b; text-shadow: 0 0 25px rgba(255,107,107,1); }
   @keyframes timer-danger-pulse {
     0%,100% { transform: scale(1); }
     50% { transform: scale(1.08); }
   }
-
   .timer-box.my-turn { filter: drop-shadow(0 0 20px rgba(79,195,247,0.5)); }
-  .timer-box.enemy-turn {
-    opacity: 0.55;
-    filter: grayscale(0.6);
-  }
+  .timer-box.enemy-turn { opacity: 0.55; filter: grayscale(0.6); }
   .timer-box.enemy-turn .timer-progress-circle { stroke: #ff6b6b; }
-  .timer-box.enemy-turn .timer-value {
-    color: #ff6b6b;
-    text-shadow: 0 0 15px rgba(255,107,107,0.5);
-  }
+  .timer-box.enemy-turn .timer-value { color: #ff6b6b; text-shadow: 0 0 15px rgba(255,107,107,0.5); }
 
   .timer-status {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 24px;
-    border-radius: 12px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 24px; border-radius: 12px;
     background: rgba(79,195,247,0.1);
     border: 2px solid rgba(79,195,247,0.3);
-    font-size: 1.1em;
-    font-weight: bold;
-    letter-spacing: 1px;
+    font-size: 1.1em; font-weight: bold; letter-spacing: 1px;
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
   }
+  .timer-status.my-turn { border-color: #4fc3f7; color: #4fc3f7; box-shadow: 0 0 20px rgba(79,195,247,0.4); }
+  .timer-status.enemy-turn { border-color: #ff6b6b; color: #ff6b6b; box-shadow: 0 0 20px rgba(255,107,107,0.4); }
+  .timer-status.waiting { border-color: #ffa726; color: #ffa726; }
 
-  .timer-status.my-turn {
-    border-color: #4fc3f7;
-    color: #4fc3f7;
-    box-shadow: 0 0 20px rgba(79,195,247,0.4);
-  }
-  .timer-status.enemy-turn {
-    border-color: #ff6b6b;
-    color: #ff6b6b;
-    box-shadow: 0 0 20px rgba(255,107,107,0.4);
-  }
-  .timer-status.waiting {
-    border-color: #ffa726;
-    color: #ffa726;
-  }
-
-  /* ===== ПАНЕЛЬ СТАТУСА ===== */
+  /* Статус */
   .status-panel {
     text-align: center; margin-bottom: 20px; padding: 15px 30px;
     background: rgba(79,195,247,0.1);
@@ -267,9 +188,7 @@
     0%,100% { box-shadow: 0 0 40px rgba(255,213,79,0.6); }
     50% { box-shadow: 0 0 60px rgba(255,213,79,1); }
   }
-  .board-wrapper.shake {
-    animation: board-shake 0.5s ease-in-out;
-  }
+  .board-wrapper.shake { animation: board-shake 0.5s ease-in-out; }
   @keyframes board-shake {
     0%, 100% { transform: translate(0, 0) rotate(0deg); }
     20% { transform: translate(-4px, 2px) rotate(-0.5deg); }
@@ -277,9 +196,7 @@
     60% { transform: translate(-3px, -2px) rotate(-0.3deg); }
     80% { transform: translate(3px, 2px) rotate(0.3deg); }
   }
-  body.slowmo {
-    filter: saturate(1.4) contrast(1.1);
-  }
+  body.slowmo { filter: saturate(1.4) contrast(1.1); }
   body.slowmo * {
     animation-duration: 3s !important;
     transition-duration: 1.5s !important;
@@ -294,8 +211,7 @@
     gap: 2px; width: 380px; height: 380px;
     background: linear-gradient(180deg, rgba(10,40,70,0.6), rgba(5,25,45,0.8));
     padding: 5px; border-radius: 10px;
-    position: relative;
-    overflow: hidden;
+    position: relative; overflow: hidden;
   }
   .board::before {
     content: '';
@@ -306,8 +222,7 @@
       radial-gradient(circle at 40% 80%, rgba(79,195,247,0.1) 0%, transparent 3%),
       radial-gradient(circle at 85% 20%, rgba(79,195,247,0.13) 0%, transparent 3%);
     animation: water-shimmer 8s ease-in-out infinite;
-    pointer-events: none;
-    border-radius: 6px;
+    pointer-events: none; border-radius: 6px;
   }
   @keyframes water-shimmer {
     0%,100% { opacity: 0.6; transform: translate(0,0); }
@@ -332,26 +247,16 @@
     transform: scale(1.1);
   }
 
-  .cell.ship {
-    background: rgba(10,30,50,0.3);
-    padding: 0;
-    z-index: 2;
-    overflow: visible;
-  }
+  .cell.ship { background: rgba(10,30,50,0.3); padding: 0; z-index: 2; overflow: visible; }
 
   .ship-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 2;
-    display: block;
-    transition: transform 0.4s ease, opacity 0.4s ease;
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 2; display: block;
   }
 
   /* ============================================================
-     🔥 ПОПАДАНИЕ В КЛЕТКУ (горит только эта клетка)
+     🔥 ПОПАДАНИЕ — ГОРИТ ТОЛЬКО ЭТА КЛЕТКА
      ============================================================ */
   .cell.hit {
     background: linear-gradient(135deg, #ff6644, #cc2200) !important;
@@ -365,12 +270,9 @@
     50% { transform: translate(2px, -1px); }
     75% { transform: translate(-1px, 2px); }
   }
-
   .cell.hit .ship-canvas {
     filter: brightness(0.35) saturate(2.5) drop-shadow(0 0 8px #ff2200) !important;
   }
-
-  /* Искра/огонёк именно на этой клетке */
   .cell.hit::before {
     content: '💥';
     position: absolute; z-index: 4; font-size: 1.4em;
@@ -378,16 +280,12 @@
     pointer-events: none;
     text-shadow: 0 0 12px #ff4400;
   }
-
-  /* Вспышка при попадании */
   .cell.hit::after {
     content: '';
-    position: absolute;
-    inset: -20%;
+    position: absolute; inset: -20%;
     background: radial-gradient(circle, rgba(255,200,50,1) 0%, rgba(255,100,0,0.6) 40%, transparent 70%);
     animation: flash-burst 0.7s ease-out forwards;
-    pointer-events: none;
-    z-index: 2;
+    pointer-events: none; z-index: 2;
   }
   @keyframes boom {
     0% { transform: scale(0) rotate(0deg); opacity: 0; }
@@ -408,8 +306,7 @@
     border: 3px solid rgba(255,150,50,0.9);
     border-radius: 50%;
     transform: translate(-50%, -50%) scale(0);
-    pointer-events: none;
-    z-index: 5;
+    pointer-events: none; z-index: 5;
     animation: shockwave 1s ease-out forwards;
   }
   @keyframes shockwave {
@@ -417,16 +314,14 @@
     100% { transform: translate(-50%, -50%) scale(6); opacity: 0; border-width: 1px; }
   }
 
-  /* ============================================================
-     🔥 МАЛЕНЬКИЙ ОГОНЁК НА ПОДБИТОЙ КЛЕТКЕ (пока корабль не потоплен)
-     ============================================================ */
+  /* 🔥 Огонёк горит только пока корабль НЕ потоплен */
   .burning-flame {
     position: absolute;
-    bottom: 15%;
+    bottom: 12%;
     left: 50%;
     transform: translateX(-50%);
-    width: 60%;
-    height: 70%;
+    width: 65%;
+    height: 75%;
     z-index: 6;
     pointer-events: none;
     background:
@@ -448,8 +343,7 @@
     width: 3px; height: 3px;
     background: #ffcc00;
     border-radius: 50%;
-    bottom: 30%;
-    left: 50%;
+    bottom: 30%; left: 50%;
     z-index: 7;
     pointer-events: none;
     box-shadow: 0 0 6px #ff8800, 0 0 10px #ff4400;
@@ -461,107 +355,26 @@
   }
 
   /* ============================================================
-     🌊 ЗАТОПЛЕНИЕ КОРАБЛЯ (когда весь корабль уничтожен)
+     🌊 ПОТОПЛЕННЫЙ КОРАБЛЬ — просто тёмный, без анимаций
      ============================================================ */
   .cell.sunk {
     background: linear-gradient(135deg, #1a2a3a, #0a1520) !important;
-    box-shadow: inset 0 0 25px rgba(0,0,0,0.9);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
     overflow: visible;
     z-index: 1;
   }
   .cell.sunk .ship-canvas {
-    animation: ship-sink 2.4s ease-in forwards;
-    transform-origin: center bottom;
+    filter: brightness(0.15) contrast(1.8) drop-shadow(0 0 3px #330000) !important;
+    opacity: 0.5;
+    animation: none !important;
+    transform: none !important;
   }
-  @keyframes ship-sink {
-    0% {
-      transform: translateY(0) rotate(0deg) scale(1);
-      filter: brightness(0.35) saturate(2.5) drop-shadow(0 0 8px #ff2200);
-      opacity: 1;
-    }
-    20% {
-      transform: translateY(3px) rotate(-2deg) scale(0.98);
-      filter: brightness(0.5) sepia(0.5) hue-rotate(-20deg) drop-shadow(0 0 10px #ff4400);
-      opacity: 1;
-    }
-    60% {
-      transform: translateY(18px) rotate(7deg) scale(0.85);
-      filter: brightness(0.2) contrast(1.8) drop-shadow(0 0 5px #ff2200);
-      opacity: 0.7;
-    }
-    100% {
-      transform: translateY(40px) rotate(14deg) scale(0.65);
-      filter: brightness(0.08) contrast(2.2) drop-shadow(0 0 2px #330000);
-      opacity: 0.35;
-    }
-  }
-
-  /* Кольцо воды вокруг тонущего корабля */
-  .cell.sunk::before {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 60%; height: 60%;
-    border: 2px solid rgba(120,200,255,0.6);
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    pointer-events: none;
-    z-index: 5;
-    animation: sunk-ring 2.4s ease-out forwards;
-  }
-  @keyframes sunk-ring {
-    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(3.5); opacity: 0; }
-  }
-
-  /* Пузыри от тонущего корабля */
-  .cell.sunk::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 6;
-    background:
-      radial-gradient(circle at 30% 70%, rgba(180,220,255,0.9) 0%, transparent 4%),
-      radial-gradient(circle at 65% 80%, rgba(180,220,255,0.7) 0%, transparent 3%),
-      radial-gradient(circle at 45% 60%, rgba(180,220,255,0.8) 0%, transparent 5%),
-      radial-gradient(circle at 20% 50%, rgba(180,220,255,0.6) 0%, transparent 3%),
-      radial-gradient(circle at 75% 55%, rgba(180,220,255,0.7) 0%, transparent 4%);
-    animation: bubbles-up 2.4s ease-out forwards;
-    opacity: 0;
-  }
-  @keyframes bubbles-up {
-    0% { opacity: 0; transform: translateY(0); }
-    15% { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-25px); }
-  }
-
-  /* Затухающий огонёк после затопления */
-  .sunk-flame {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 6px; height: 12px;
-    background: radial-gradient(ellipse at bottom, #ff4400 0%, #ffaa00 40%, transparent 70%);
-    border-radius: 50% 50% 20% 20%;
-    transform: translate(-50%, -60%);
-    z-index: 7;
-    pointer-events: none;
-    animation: flame-flicker 0.4s ease-in-out infinite alternate, flame-shrink 2.4s ease-out forwards;
-    filter: blur(0.5px) drop-shadow(0 0 6px #ff4400);
-  }
-  @keyframes flame-flicker {
-    0% { transform: translate(-50%, -60%) scale(1) rotate(-3deg); opacity: 1; }
-    100% { transform: translate(-50%, -65%) scale(1.15) rotate(3deg); opacity: 0.8; }
-  }
-  @keyframes flame-shrink {
-    0% { opacity: 0; transform: translate(-50%, -60%) scale(0); }
-    20% { opacity: 1; transform: translate(-50%, -60%) scale(1.2); }
-    100% { opacity: 0.4; transform: translate(-50%, -60%) scale(0.5); }
-  }
+  /* Никаких огоньков и пузырей на потопленных */
+  .cell.sunk::before,
+  .cell.sunk::after { display: none !important; }
 
   /* ============================================================
-     РЕАЛИСТИЧНАЯ ВОДА ПРИ ПРОМАХЕ
+     💧 ПРОМАХ — реалистичные круги на воде
      ============================================================ */
   .cell.miss {
     background: linear-gradient(135deg, #0d2842 0%, #081a2c 100%);
@@ -576,8 +389,7 @@
     border-radius: 50%;
     transform: translate(-50%, -50%) scale(0);
     animation: ripple 1.6s ease-out forwards;
-    pointer-events: none;
-    z-index: 4;
+    pointer-events: none; z-index: 4;
   }
   .cell.miss::after {
     content: '';
@@ -588,16 +400,14 @@
     border-radius: 50%;
     transform: translate(-50%, -50%) scale(0);
     animation: ripple 1.6s ease-out 0.3s forwards;
-    pointer-events: none;
-    z-index: 4;
+    pointer-events: none; z-index: 4;
   }
   @keyframes ripple {
     0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(5); opacity: 0; }
   }
   .cell.miss .drop-icon {
-    position: absolute;
-    z-index: 5;
+    position: absolute; z-index: 5;
     font-size: 1em;
     animation: droplet 1.2s ease-out forwards;
     pointer-events: none;
@@ -616,23 +426,18 @@
   }
   .cell.blocked::before {
     content: '';
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     background:
       linear-gradient(45deg, transparent calc(50% - 1px), rgba(255,80,80,0.85) calc(50% - 1px), rgba(255,80,80,0.85) calc(50% + 1px), transparent calc(50% + 1px)),
       linear-gradient(-45deg, transparent calc(50% - 1px), rgba(255,80,80,0.85) calc(50% - 1px), rgba(255,80,80,0.85) calc(50% + 1px), transparent calc(50% + 1px));
-    pointer-events: none;
-    z-index: 3;
+    pointer-events: none; z-index: 3;
     animation: cross-appear 0.4s ease-out;
   }
   @keyframes cross-appear {
     0% { opacity: 0; transform: scale(0.5); }
     100% { opacity: 1; transform: scale(1); }
   }
-  .cell.blocked:hover {
-    transform: none !important;
-    box-shadow: none !important;
-  }
+  .cell.blocked:hover { transform: none !important; box-shadow: none !important; }
 
   .cell.preview-valid {
     background: rgba(102,187,106,0.5) !important;
@@ -655,8 +460,7 @@
     box-shadow: 0 4px 15px rgba(79,195,247,0.4);
     text-transform: uppercase; font-family: inherit;
     min-height: 46px;
-    -webkit-appearance: none;
-    appearance: none;
+    -webkit-appearance: none; appearance: none;
   }
   button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(79,195,247,0.6); }
   button:active:not(:disabled) { transform: translateY(0); }
@@ -767,8 +571,7 @@
   .win-epic-flash {
     position: fixed; inset: 0;
     background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(79,195,247,0.8) 30%, transparent 70%);
-    z-index: 199;
-    pointer-events: none;
+    z-index: 199; pointer-events: none;
     animation: epic-flash 1.5s ease-out forwards;
   }
   @keyframes epic-flash {
@@ -780,17 +583,13 @@
   .lightning {
     position: fixed;
     top: 0;
-    width: 4px;
-    height: 100vh;
+    width: 4px; height: 100vh;
     background: linear-gradient(180deg, transparent 0%, #fff 30%, #4fc3f7 50%, #fff 70%, transparent 100%);
-    z-index: 198;
-    pointer-events: none;
+    z-index: 198; pointer-events: none;
     opacity: 0;
     filter: blur(2px) drop-shadow(0 0 20px #4fc3f7);
   }
-  .lightning.strike {
-    animation: lightning-strike 0.4s ease-out;
-  }
+  .lightning.strike { animation: lightning-strike 0.4s ease-out; }
   @keyframes lightning-strike {
     0% { opacity: 0; transform: scaleY(0); }
     30% { opacity: 1; transform: scaleY(1); }
@@ -839,10 +638,8 @@
      МОБИЛЬНАЯ АДАПТАЦИЯ
      ================================================================ */
   .rules-toggle {
-    display: none;
-    margin-top: 10px;
-    font-size: 0.9em;
-    padding: 8px 16px;
+    display: none; margin-top: 10px;
+    font-size: 0.9em; padding: 8px 16px;
   }
 
   @media (max-width: 768px) {
@@ -1138,7 +935,7 @@ function toggleRules() {
 }
 
 // ===================================================
-// СМЕНА ВРЕМЕНИ СУТОК
+// ВРЕМЯ СУТОК
 // ===================================================
 const TimeOfDay = {
   states: ['day', 'sunset', 'night', 'dawn'],
@@ -1168,7 +965,7 @@ const TimeOfDay = {
 };
 
 // ===================================================
-// ЭПИЧНЫЕ ЭФФЕКТЫ ПОБЕДЫ
+// ЭФФЕКТЫ ПОБЕДЫ
 // ===================================================
 function epicFlash() {
   const flash = document.createElement('div');
@@ -1208,23 +1005,19 @@ function playEpicWin() {
 }
 
 // ===================================================
-// 🔥 АНИМАЦИЯ ПОПАДАНИЯ (только в одной клетке)
+// АНИМАЦИЯ ПОПАДАНИЯ
 // ===================================================
 function playHitAnimation(cellEl, row, col) {
   if (!cellEl) return;
-
-  // Ударная волна
   const wave = document.createElement('div');
   wave.className = 'shockwave';
   cellEl.appendChild(wave);
   setTimeout(() => wave.remove(), 1000);
 
-  // Тряска клетки
   cellEl.style.animation = 'none';
   void cellEl.offsetWidth;
   cellEl.style.animation = 'hit-shake 0.4s ease-out';
 
-  // Тряска доски
   const board = cellEl.parentElement;
   if (board) {
     board.style.animation = 'none';
@@ -1235,7 +1028,7 @@ function playHitAnimation(cellEl, row, col) {
 }
 
 // ===================================================
-// 🌊 АНИМАЦИЯ ПРОМАХА
+// АНИМАЦИЯ ПРОМАХА
 // ===================================================
 function playMissAnimation(cellEl) {
   if (!cellEl) return;
@@ -1247,19 +1040,22 @@ function playMissAnimation(cellEl) {
 }
 
 // ===================================================
-// 🔥 ДОБАВИТЬ ГОРЯЩИЙ ОГОНЁК В КЛЕТКУ (пока корабль не потоплен)
+// 🔥 ДОБАВИТЬ ОГОНЁК ГОРЕНИЯ (только для подбитых, но не потопленных)
 // ===================================================
 function addBurningFlame(cellEl) {
   if (!cellEl) return;
+  // Если клетка уже sunk (потоплена) — не добавляем
+  if (cellEl.classList.contains('sunk')) return;
+
   // Убираем старый, если есть
   const old = cellEl.querySelector('.burning-flame');
   if (old) old.remove();
+  cellEl.querySelectorAll('.spark').forEach(el => el.remove());
 
   const flame = document.createElement('div');
   flame.className = 'burning-flame';
   cellEl.appendChild(flame);
 
-  // Добавляем 3-4 искры, летящие вверх
   for (let i = 0; i < 3; i++) {
     const spark = document.createElement('div');
     spark.className = 'spark';
@@ -1270,31 +1066,10 @@ function addBurningFlame(cellEl) {
   }
 }
 
-// ===================================================
-// 🌊 АНИМАЦИЯ ЗАТОПЛЕНИЯ КОРАБЛЯ (когда потоплен весь)
-// ===================================================
-function playShipSinkAnimation(shipCells, boardEl) {
-  if (!shipCells || shipCells.length === 0 || !boardEl) return;
-
-  shipCells.forEach(([r, c]) => {
-    const cellEl = getCellEl(boardEl, r, c);
-    if (!cellEl) return;
-    // Убираем огоньки горения — теперь корабль тонет
-    cellEl.querySelectorAll('.burning-flame, .spark').forEach(el => el.remove());
-
-    // Добавляем затухающий огонёк
-    const flame = document.createElement('div');
-    flame.className = 'sunk-flame';
-    cellEl.appendChild(flame);
-    setTimeout(() => flame.remove(), 3000);
-  });
-
-  boardEl.style.animation = 'none';
-  void boardEl.offsetWidth;
-  boardEl.style.animation = 'board-shake 0.6s ease-in-out';
-  setTimeout(() => { boardEl.style.animation = ''; }, 700);
-
-  console.log('[Sink] Корабль уходит под воду:', shipCells.length, 'палуб');
+// Убрать огонь (для потопленных клеток)
+function removeBurningFlame(cellEl) {
+  if (!cellEl) return;
+  cellEl.querySelectorAll('.burning-flame, .spark').forEach(el => el.remove());
 }
 
 // ===================================================
@@ -1796,11 +1571,14 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
   ctx.restore();
 
   if (isSunk) {
-    canvas.style.filter = 'brightness(0.25) contrast(1.8) drop-shadow(0 0 5px #ff2200)';
+    canvas.style.filter = 'brightness(0.15) contrast(1.8) drop-shadow(0 0 3px #330000)';
+    canvas.style.opacity = '0.5';
   } else if (isHit) {
     canvas.style.filter = 'brightness(0.35) saturate(2.5) drop-shadow(0 0 8px #ff2200)';
+    canvas.style.opacity = '1';
   } else {
     canvas.style.filter = 'drop-shadow(0 2px 3px rgba(0,0,0,0.55))';
+    canvas.style.opacity = '1';
   }
 }
 
@@ -1946,7 +1724,7 @@ function renderMyBoard(preview = null) {
     }
   }
 
-  // После отрисовки — добавляем горящие огоньки в подбитые (но не потопленные) корабли
+  // 🔥 Добавляем огоньки на подбитые, но НЕ потопленные корабли
   requestAnimationFrame(() => {
     for (let r = 0; r < BOARD_SIZE; r++) {
       for (let c = 0; c < BOARD_SIZE; c++) {
@@ -2010,7 +1788,7 @@ function renderEnemyBoard() {
     }
   }
 
-  // После отрисовки — добавляем горящие огоньки в подбитые (но не потопленные) клетки
+  // 🔥 Добавляем огоньки на подбитые, но НЕ потопленные клетки
   requestAnimationFrame(() => {
     for (let r = 0; r < BOARD_SIZE; r++) {
       for (let c = 0; c < BOARD_SIZE; c++) {
@@ -2497,16 +2275,18 @@ function handleEnemyShot(r, c) {
       setTimeout(() => {
         Sound.playSunk();
         vibrate([100, 50, 100, 50, 200]);
-        // Полная перерисовка: потопленные клетки получат класс sunk → запустится анимация затопления
-        renderMyBoard();
+        // Убираем огоньки со ВСЕХ клеток этого корабля
         const cells = getShipCells(G.myBoard, r, c);
-        setTimeout(() => playShipSinkAnimation(cells, myBoardEl), 40);
+        cells.forEach(([sr, sc]) => {
+          const el = getCellEl(myBoardEl, sr, sc);
+          if (el) removeBurningFlame(el);
+        });
+        // Перерисовываем — они станут sunk (тёмными, без огня)
+        renderMyBoard();
       }, 200);
     } else {
       // Не потоплен — добавим огонёк в эту клетку
-      setTimeout(() => {
-        if (cellEl) addBurningFlame(cellEl);
-      }, 100);
+      setTimeout(() => { if (cellEl) addBurningFlame(cellEl); }, 100);
     }
 
     send({ type: 'shotResult', row: r, col: c, hit: true, sunk: sunk, win: allSunk });
@@ -2563,16 +2343,17 @@ function handleShotResult(r, c, hit, sunk, win) {
       setTimeout(() => {
         Sound.playSunk();
         vibrate([100, 50, 100, 50, 200]);
-        // Полная перерисовка → запустится анимация затопления
+        // Убираем огоньки со ВСЕХ клеток этого корабля
+        cells.forEach(([sr, sc]) => {
+          const el = getCellEl(enemyBoardEl, sr, sc);
+          if (el) removeBurningFlame(el);
+        });
+        // Перерисовка — они станут sunk
         renderEnemyBoard();
-        setTimeout(() => playShipSinkAnimation(cells, enemyBoardEl), 40);
       }, 250);
       showNotification('🔥 КОРАБЛЬ ПОТОПЛЕН!');
     } else {
-      // Не потоплен — добавляем огонёк в эту клетку
-      setTimeout(() => {
-        if (cellEl) addBurningFlame(cellEl);
-      }, 100);
+      setTimeout(() => { if (cellEl) addBurningFlame(cellEl); }, 100);
     }
     if (win) {
       G.phase = 'gameover'; G.turn = 'waiting';
