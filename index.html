@@ -101,9 +101,7 @@
     stroke-linecap: round;
   }
 
-  .timer-bg-circle {
-    stroke: rgba(79,195,247,0.15);
-  }
+  .timer-bg-circle { stroke: rgba(79,195,247,0.15); }
 
   .timer-progress-circle {
     stroke: #4fc3f7;
@@ -547,31 +545,6 @@
      МОБИЛЬНАЯ АДАПТАЦИЯ
      ================================================================ */
 
-  /* Кнопка «Наверх» — только на мобильных */
-  .scroll-top-btn {
-    display: none;
-    position: fixed;
-    right: 20px;
-    bottom: calc(20px + env(safe-area-inset-bottom));
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #4fc3f7, #0288d1);
-    color: #fff;
-    border: none;
-    font-size: 1.4em;
-    z-index: 50;
-    box-shadow: 0 6px 20px rgba(79,195,247,0.6);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 0;
-    min-height: 50px;
-  }
-  .scroll-top-btn:active {
-    transform: scale(0.9);
-  }
-
-  /* Кнопка «Свернуть правила» на мобильных */
   .rules-toggle {
     display: none;
     margin-top: 10px;
@@ -582,78 +555,83 @@
   /* === Планшеты и телефоны: до 768px === */
   @media (max-width: 768px) {
     body {
-      padding: 12px;
-      padding-top: calc(12px + env(safe-area-inset-top));
-      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      padding: 10px;
+      padding-top: calc(10px + env(safe-area-inset-top));
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
     }
 
     h1 {
-      font-size: 1.8em;
+      font-size: 1.6em;
       letter-spacing: 2px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     /* Таймер компактнее */
     .timer-container {
       gap: 12px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .timer-box {
-      width: 100px;
-      height: 100px;
+      width: 90px;
+      height: 90px;
     }
-    .timer-value { font-size: 2.2em; }
-    .timer-label { font-size: 0.65em; }
+    .timer-value { font-size: 2em; }
+    .timer-label { font-size: 0.6em; }
 
     .timer-status {
-      padding: 10px 16px;
-      font-size: 0.95em;
+      padding: 8px 14px;
+      font-size: 0.85em;
     }
 
     /* Статус-панель меньше */
     .status-panel {
-      padding: 12px 20px;
-      font-size: 1em;
-      min-height: 50px;
-      margin-bottom: 12px;
+      padding: 10px 16px;
+      font-size: 0.95em;
+      min-height: 46px;
+      margin-bottom: 10px;
     }
 
     /* Счёт компактнее */
     .score-panel {
-      gap: 10px;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 10px;
     }
     .score-card {
-      padding: 10px 16px;
-      min-width: 140px;
+      padding: 8px 14px;
+      min-width: 120px;
       flex: 1;
-      max-width: 180px;
+      max-width: 170px;
     }
-    .score-card .label { font-size: 0.85em; }
-    .score-card .value { font-size: 1.6em; }
+    .score-card .label { font-size: 0.8em; }
+    .score-card .value { font-size: 1.4em; }
 
-    /* Поля вертикально, друг под другом */
+    /* На мобильном видно только одно поле — то, которое нужно */
     .game-area {
       flex-direction: column;
       align-items: center;
-      gap: 15px;
-      margin-bottom: 15px;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* Скрываем поле, которое не нужно в данный момент */
+    body.is-mobile .board-wrapper.hidden-mobile {
+      display: none !important;
     }
 
     .board-wrapper {
       padding: 12px;
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
     }
     .board-title {
-      font-size: 1.15em;
-      margin-bottom: 10px;
+      font-size: 1.1em;
+      margin-bottom: 8px;
     }
 
     /* Поле — адаптивное, вписывается в экран */
     .board {
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
       aspect-ratio: 1 / 1;
       height: auto;
       gap: 1px;
@@ -662,16 +640,9 @@
     }
 
     .cell {
-      font-size: 1.1em;
-      /* min 32px для удобного тапа */
+      font-size: 1em;
       min-width: 0;
       min-height: 0;
-    }
-
-    /* Клетка с пальцем — увеличиваем hit area */
-    .cell.clickable:active {
-      background: linear-gradient(135deg, rgba(255,213,79,0.9) 0%, rgba(255,179,0,0.9) 100%);
-      transform: scale(1.08);
     }
 
     /* Убираем hover-эффекты на тач-устройствах */
@@ -680,47 +651,52 @@
       transform: none;
       box-shadow: none;
     }
+    .cell.clickable:active {
+      background: linear-gradient(135deg, rgba(255,213,79,0.9) 0%, rgba(255,179,0,0.9) 100%) !important;
+      transform: scale(1.05);
+    }
 
     /* Кнопки крупнее для пальцев */
     .controls {
-      gap: 10px;
-      margin-top: 15px;
+      gap: 8px;
+      margin-top: 10px;
     }
     button {
-      padding: 14px 20px;
-      font-size: 0.9em;
-      min-height: 50px;
-      flex: 1 1 calc(50% - 10px);
-      max-width: calc(50% - 5px);
+      padding: 12px 16px;
+      font-size: 0.85em;
+      min-height: 48px;
+      flex: 1 1 calc(50% - 8px);
+      max-width: calc(50% - 4px);
     }
     #soundToggle {
-      padding: 12px 20px;
-      font-size: 0.9em;
-      min-height: 46px;
+      padding: 10px 16px;
+      font-size: 0.85em;
+      min-height: 42px;
       width: auto;
       max-width: none;
+      flex: none;
     }
 
     /* Экран приветствия */
     .screen {
       padding: 15px;
       justify-content: flex-start;
-      padding-top: calc(30px + env(safe-area-inset-top));
+      padding-top: calc(20px + env(safe-area-inset-top));
     }
-    .screen h2 { font-size: 1.8em; margin-bottom: 15px; }
-    .screen p { font-size: 1em; }
+    .screen h2 { font-size: 1.6em; margin-bottom: 12px; }
+    .screen p { font-size: 0.95em; }
 
     .rules {
-      padding: 18px;
-      margin: 15px 0;
+      padding: 15px;
+      margin: 12px 0;
       max-width: 100%;
       width: 100%;
     }
-    .rules h3 { font-size: 1.1em; margin-bottom: 10px; }
-    .rules li { padding: 6px 0; font-size: 0.9em; }
+    .rules h3 { font-size: 1em; margin-bottom: 8px; }
+    .rules li { padding: 5px 0; font-size: 0.85em; }
 
     .menu-buttons {
-      gap: 12px;
+      gap: 10px;
       width: 100%;
       max-width: 400px;
     }
@@ -730,9 +706,9 @@
     }
 
     .room-code-box {
-      font-size: 1.8em;
-      letter-spacing: 5px;
-      padding: 15px 20px;
+      font-size: 1.6em;
+      letter-spacing: 4px;
+      padding: 12px 16px;
     }
 
     .copy-box {
@@ -743,7 +719,7 @@
     .copy-box input {
       width: 100%;
       max-width: 100%;
-      font-size: 0.75em;
+      font-size: 0.7em;
     }
     .copy-box button {
       width: 100%;
@@ -756,131 +732,129 @@
     }
     input[type="text"] {
       width: 100%;
-      font-size: 1.1em;
+      font-size: 1em;
     }
 
     .notification {
-      padding: 25px 35px;
-      font-size: 1.5em;
+      padding: 20px 28px;
+      font-size: 1.3em;
       max-width: 90vw;
     }
 
-    /* Показать мобильные кнопки */
-    .scroll-top-btn { display: block; }
     .rules-toggle { display: inline-block; }
   }
 
   /* === Маленькие телефоны: до 400px === */
   @media (max-width: 400px) {
-    h1 { font-size: 1.5em; }
-    .timer-box { width: 85px; height: 85px; }
-    .timer-value { font-size: 1.9em; }
-    .timer-status { padding: 8px 12px; font-size: 0.85em; }
+    h1 { font-size: 1.3em; }
+    .timer-box { width: 80px; height: 80px; }
+    .timer-value { font-size: 1.8em; }
+    .timer-status { padding: 6px 10px; font-size: 0.75em; }
 
     .board-wrapper { padding: 8px; }
-    .board-title { font-size: 1em; }
+    .board-title { font-size: 0.95em; }
 
     .score-card {
-      padding: 8px 12px;
-      min-width: 120px;
+      padding: 6px 10px;
+      min-width: 100px;
     }
-    .score-card .value { font-size: 1.4em; }
+    .score-card .label { font-size: 0.75em; }
+    .score-card .value { font-size: 1.3em; }
 
-    button { font-size: 0.8em; padding: 12px 16px; }
+    button { font-size: 0.78em; padding: 10px 12px; }
   }
 
   /* === Телефон в повороте (landscape) === */
   @media (orientation: landscape) and (max-height: 600px) and (max-width: 950px) {
     body {
-      padding: 8px;
-      padding-top: calc(8px + env(safe-area-inset-top));
-      padding-bottom: calc(8px + env(safe-area-inset-bottom));
+      padding: 6px;
+      padding-top: calc(6px + env(safe-area-inset-top));
+      padding-bottom: calc(6px + env(safe-area-inset-bottom));
     }
 
     h1 {
-      font-size: 1.3em;
-      margin-bottom: 8px;
+      font-size: 1.1em;
+      margin-bottom: 6px;
       letter-spacing: 2px;
     }
 
     .timer-container {
-      margin-bottom: 8px;
-      gap: 15px;
+      margin-bottom: 6px;
+      gap: 12px;
     }
     .timer-box {
-      width: 75px;
-      height: 75px;
+      width: 65px;
+      height: 65px;
     }
-    .timer-value { font-size: 1.7em; }
-    .timer-label { font-size: 0.55em; }
+    .timer-value { font-size: 1.5em; }
+    .timer-label { font-size: 0.5em; }
     .timer-status {
-      padding: 8px 14px;
-      font-size: 0.85em;
+      padding: 6px 10px;
+      font-size: 0.75em;
     }
 
     .status-panel {
-      padding: 8px 15px;
-      min-height: 42px;
-      font-size: 0.9em;
-      margin-bottom: 8px;
+      padding: 6px 12px;
+      min-height: 38px;
+      font-size: 0.85em;
+      margin-bottom: 6px;
     }
 
     .score-panel {
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 6px;
+      margin-bottom: 6px;
     }
     .score-card {
-      padding: 6px 14px;
-      min-width: 110px;
+      padding: 4px 10px;
+      min-width: 90px;
     }
-    .score-card .label { font-size: 0.75em; }
-    .score-card .value { font-size: 1.3em; }
+    .score-card .label { font-size: 0.7em; }
+    .score-card .value { font-size: 1.2em; }
 
-    /* В ландшафте — поля рядом */
+    /* В ландшафте — одно поле по центру */
     .game-area {
-      flex-direction: row;
-      gap: 12px;
-      margin-bottom: 8px;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 6px;
     }
 
     .board-wrapper {
       padding: 8px;
       width: auto;
       max-width: none;
-      flex: 1 1 auto;
+      flex: none;
     }
     .board-title {
-      font-size: 0.95em;
-      margin-bottom: 6px;
+      font-size: 0.9em;
+      margin-bottom: 4px;
     }
 
-    /* Поля по высоте экрана */
     .board {
       width: auto;
-      height: 55vh;
-      max-height: 320px;
+      height: 60vh;
+      max-height: 340px;
       aspect-ratio: 1 / 1;
       min-width: 0;
-      max-width: 320px;
+      max-width: 340px;
     }
 
-    .cell { font-size: 1em; }
+    .cell { font-size: 0.85em; }
 
     .controls {
-      gap: 8px;
-      margin-top: 8px;
+      gap: 6px;
+      margin-top: 6px;
     }
     button {
-      padding: 10px 14px;
-      font-size: 0.8em;
-      min-height: 42px;
+      padding: 8px 12px;
+      font-size: 0.75em;
+      min-height: 40px;
       flex: 1 1 auto;
       max-width: none;
     }
     #soundToggle {
-      padding: 8px 14px;
-      font-size: 0.8em;
-      min-height: 40px;
+      padding: 6px 12px;
+      font-size: 0.75em;
+      min-height: 36px;
     }
   }
 
@@ -899,28 +873,17 @@
     }
     .cell.clickable:active {
       background: linear-gradient(135deg, rgba(255,213,79,0.9) 0%, rgba(255,179,0,0.9) 100%) !important;
-      transform: scale(1.08);
+      transform: scale(1.05);
     }
-    /* Убираем tap-подсветку и hover на тач-экранах */
     * { -webkit-tap-highlight-color: transparent; }
   }
 
-  /* === Класс is-mobile (ставится через JS) === */
-  body.is-mobile .scroll-top-btn { display: block; }
   body.is-mobile .rules-toggle { display: inline-block; }
-
-  body.is-mobile .cell {
-    /* На тач-устройствах предотвращаем выделение */
-    -webkit-user-drag: none;
-  }
 </style>
 </head>
 <body>
 
 <div class="stars" id="stars"></div>
-
-<!-- Плавающая кнопка «Наверх» -->
-<button class="scroll-top-btn" id="scrollTopBtn" onclick="scrollToTop()" title="Наверх">⬆</button>
 
 <!-- ЭКРАН 1: Главное меню -->
 <div class="screen" id="menuScreen">
@@ -1000,7 +963,7 @@
 <div class="container hidden" id="gameContainer">
   <h1>⚓ МОРСКОЙ БОЙ ⚓</h1>
 
-  <div style="text-align: center; margin-bottom: 10px;">
+  <div style="text-align: center; margin-bottom: 8px;">
     <button id="soundToggle" onclick="toggleSound()">🔊 ЗВУК ВКЛ</button>
   </div>
 
@@ -1046,12 +1009,12 @@
 
   <div class="game-area">
     <div class="board-wrapper my-wrapper" id="myWrapper">
-      <div class="board-title">🔵 Ваше поле</div>
+      <div class="board-title" id="myBoardTitle">🔵 Ваше поле</div>
       <div class="board" id="myBoard"></div>
     </div>
 
     <div class="board-wrapper enemy-wrapper" id="enemyWrapper">
-      <div class="board-title">🔴 Поле соперника</div>
+      <div class="board-title" id="enemyBoardTitle">🔴 Поле соперника</div>
       <div class="board" id="enemyBoard"></div>
     </div>
   </div>
@@ -1086,44 +1049,31 @@ const DeviceInfo = (function() {
   return { isMobile, isTouch, isIOS, isAndroid, isSmallScreen, supportsVibrate };
 })();
 
-// Ставим класс на body
 document.body.classList.add(DeviceInfo.isMobile ? 'is-mobile' : 'is-desktop');
 if (DeviceInfo.isTouch) document.body.classList.add('is-touch');
 console.log('[Device]', DeviceInfo);
 
-// Блокируем двойной тап (зум)
+// Блокировка двойного тапа
 let lastTouchEnd = 0;
 document.addEventListener('touchend', (e) => {
   const now = Date.now();
-  if (now - lastTouchEnd <= 300) {
-    e.preventDefault();
-  }
+  if (now - lastTouchEnd <= 300) e.preventDefault();
   lastTouchEnd = now;
 }, { passive: false });
 
-// Блокируем контекстное меню на долгое нажатие (мобильные)
 document.addEventListener('contextmenu', (e) => {
   if (DeviceInfo.isTouch) e.preventDefault();
 });
-
-// Блокируем pinch-zoom
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('gesturechange', (e) => e.preventDefault());
 document.addEventListener('gestureend', (e) => e.preventDefault());
 
-// Вибрация (Android)
 function vibrate(pattern) {
   if (!DeviceInfo.supportsVibrate) return;
-  if (!Sound.enabled) return;    // если звук выключен — не вибрируем
+  if (!Sound.enabled) return;
   try { navigator.vibrate(pattern); } catch(e) {}
 }
 
-// Прокрутка наверх
-function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Сворачивание правил
 function toggleRules() {
   const rules = document.getElementById('menuRules');
   if (!rules) return;
@@ -1496,6 +1446,10 @@ function emptyBoard() {
 const $ = id => document.getElementById(id);
 const myBoardEl = $('myBoard');
 const enemyBoardEl = $('enemyBoard');
+const myWrapperEl = $('myWrapper');
+const enemyWrapperEl = $('enemyWrapper');
+const myBoardTitleEl = $('myBoardTitle');
+const enemyBoardTitleEl = $('enemyBoardTitle');
 const statusText = $('statusText');
 const statusPanel = $('statusPanel');
 const notification = $('notification');
@@ -1514,6 +1468,38 @@ const connText = $('connText');
     el.appendChild(s);
   }
 })();
+
+// ===================================================
+// УПРАВЛЕНИЕ ВИДИМОСТЬЮ ПОЛЕЙ НА МОБИЛЬНОМ
+// ===================================================
+// Показываем только одно поле, в зависимости от фазы и хода
+function updateMobileBoardVisibility() {
+  if (!DeviceInfo.isMobile) {
+    // На ПК всегда видны оба поля
+    myWrapperEl.classList.remove('hidden-mobile');
+    enemyWrapperEl.classList.remove('hidden-mobile');
+    return;
+  }
+
+  const showEnemy = (G.phase === 'battle' && G.turn === 'my-turn');
+  const showMine  = !showEnemy;
+
+  if (showEnemy) {
+    enemyWrapperEl.classList.remove('hidden-mobile');
+    myWrapperEl.classList.add('hidden-mobile');
+    enemyBoardTitleEl.textContent = '🔴 Ваш ход — стреляйте!';
+  } else {
+    myWrapperEl.classList.remove('hidden-mobile');
+    enemyWrapperEl.classList.add('hidden-mobile');
+    if (G.phase === 'placement') {
+      myBoardTitleEl.textContent = '🔵 Расставьте корабли';
+    } else if (G.phase === 'battle' && G.turn === 'enemy-turn') {
+      myBoardTitleEl.textContent = '🔵 Ваше поле — соперник стреляет';
+    } else {
+      myBoardTitleEl.textContent = '🔵 Ваше поле';
+    }
+  }
+}
 
 // ===================================================
 // РИСОВАНИЕ КОРАБЛЯ
@@ -2070,9 +2056,9 @@ function startGame() {
   renderMyBoard();
   renderEnemyBoard();
   updatePlacementUI();
+  updateMobileBoardVisibility();
   Sound.playNotify();
 
-  // Скролл наверх при старте игры
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -2231,6 +2217,7 @@ function startBattlePhase() {
   updateBattleUI();
   renderMyBoard();
   renderEnemyBoard();
+  updateMobileBoardVisibility();
   Sound.startMusic();
   Sound.playNotify();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2256,6 +2243,7 @@ function startMyTurnTimer() {
     TurnTimer.setStatus('enemy');
     updateBattleUI();
     renderEnemyBoard();
+    updateMobileBoardVisibility();
   });
 }
 
@@ -2264,6 +2252,7 @@ function handleEnemyTimeout() {
   G.waitingForResult = false;
   updateBattleUI();
   renderEnemyBoard();
+  updateMobileBoardVisibility();
   showNotification('⏱ Соперник не успел! Ваш ход');
   Sound.playNotify();
   vibrate(50);
@@ -2288,6 +2277,7 @@ function updateBattleUI() {
     }
   }
   updateScore();
+  updateMobileBoardVisibility();
 }
 
 function updateScore() {
@@ -2480,7 +2470,6 @@ function copyLink() {
   } else { document.execCommand('copy'); done(); }
 }
 
-// Горячие клавиши (только ПК)
 if (!DeviceInfo.isTouch) {
   document.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase();
@@ -2488,35 +2477,21 @@ if (!DeviceInfo.isTouch) {
   });
 }
 
-// Загрузка
 window.addEventListener('load', () => {
   const url = new URLSearchParams(window.location.search);
   if (url.get('room')) showJoinScreen();
 
-  // Автоскрытие правил на очень маленьких экранах
   if (window.innerWidth < 400) {
     const rules = document.getElementById('menuRules');
     if (rules) rules.style.display = 'none';
   }
 });
 
-// Пересчёт устройства при изменении размера/повороте
-let resizeTimeout;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(() => {
-    const nowMobile = window.innerWidth <= 768;
-    if (nowMobile !== DeviceInfo.isSmallScreen) {
-      DeviceInfo.isSmallScreen = nowMobile;
-      // Не перезагружаем страницу, просто даём CSS справиться
-      console.log('[Resize] Mobile:', nowMobile);
-    }
-  }, 250);
-});
-
 window.addEventListener('orientationchange', () => {
-  // Небольшая пауза для обновления размеров
-  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 300);
+  setTimeout(() => {
+    updateMobileBoardVisibility();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 300);
 });
 </script>
 
