@@ -158,6 +158,32 @@
     box-shadow: inset 0 0 15px rgba(239,83,80,0.8);
   }
 
+  /* ===== ЗАЧЁРКНУТЫЕ КЛЕТКИ ВОКРУГ ПОТОПЛЕННЫХ ===== */
+  .cell.blocked {
+    background: linear-gradient(135deg, rgba(60,60,60,0.7), rgba(30,30,30,0.85)) !important;
+    cursor: not-allowed;
+    position: relative;
+  }
+  .cell.blocked::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(45deg, transparent calc(50% - 1px), rgba(255,80,80,0.85) calc(50% - 1px), rgba(255,80,80,0.85) calc(50% + 1px), transparent calc(50% + 1px)),
+      linear-gradient(-45deg, transparent calc(50% - 1px), rgba(255,80,80,0.85) calc(50% - 1px), rgba(255,80,80,0.85) calc(50% + 1px), transparent calc(50% + 1px));
+    pointer-events: none;
+    z-index: 3;
+    animation: cross-appear 0.4s ease-out;
+  }
+  @keyframes cross-appear {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .cell.blocked:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
   /* Попадание */
   .cell.hit {
     background: linear-gradient(135deg, #ff4444, #cc0000) !important;
@@ -398,6 +424,7 @@
       <li>Он отправляет ссылку-приглашение другу</li>
       <li>Друг открывает ссылку и подключается</li>
       <li>Играете в реальном времени!</li>
+      <li>Вокруг потопленных кораблей клетки зачёркиваются</li>
     </ul>
   </div>
 
@@ -599,63 +626,42 @@ const Sound = {
     source.stop(t + duration);
   },
 
-  // ============================================
-  // ЗВУК ВЫСТРЕЛА
-  // ============================================
   playShoot() {
     this.init();
-    // Резкий "пиу" выстрела из пушки
     this.sweep(900, 150, 0.2, 'square', 0.15);
     this.noise(0.15, 0.12, 2500, 0, 'highpass', 0.7);
-    // Гул орудия
     this.tone(180, 0.15, 'sawtooth', 0.1, 0.02);
   },
 
-  // ============================================
-  // ЗВУК ВЗРЫВА (попадание)
-  // ============================================
   playHit() {
     this.init();
-    // 1. Оглушительный бас — сердце взрыва
     this.tone(55, 0.8, 'sine', 0.6, 0);
     this.tone(40, 1.0, 'sine', 0.5, 0.02);
-    // 2. Средние частоты — "тело" взрыва
     this.tone(90, 0.5, 'sawtooth', 0.35, 0.01);
     this.tone(130, 0.4, 'square', 0.2, 0.05);
-    // 3. Высокий треск — осколки
     this.sweep(2000, 200, 0.35, 'square', 0.12, 0.01);
-    // 4. Шум — разрушение
     this.noise(0.6, 0.4, 800, 0, 'lowpass', 1.5);
     this.noise(0.3, 0.25, 3000, 0.05, 'highpass', 0.5);
-    // 5. Гул после взрыва (эхо)
     this.tone(45, 1.2, 'sine', 0.2, 0.3);
     this.tone(35, 1.5, 'sine', 0.15, 0.5);
   },
 
-  // ============================================
-  // ЗВУК БОЛЬШОГО ВЗРЫВА (потопление корабля)
-  // ============================================
   playSunk() {
     this.init();
-    // Каскад взрывов
     for (let i = 0; i < 4; i++) {
       const delay = i * 0.08;
       this.tone(50 + Math.random() * 30, 0.7, 'sine', 0.45, delay);
       this.noise(0.5, 0.3, 700 + i * 200, delay, 'lowpass', 1.8);
     }
-    // Финальный мощный бум
     this.tone(35, 1.5, 'sine', 0.55, 0.35);
     this.tone(60, 1.2, 'sawtooth', 0.3, 0.35);
     this.noise(1.2, 0.35, 500, 0.35, 'lowpass', 1.5);
-    // Долгий низкий гул-эхо
     this.tone(28, 2.5, 'sine', 0.25, 0.6);
     this.tone(38, 2.0, 'sine', 0.2, 0.8);
-    // Высокие "звенящие" после взрыва
     this.tone(1800, 0.4, 'sine', 0.08, 0.4);
     this.tone(2400, 0.5, 'sine', 0.06, 0.5);
   },
 
-  // Промах — всплеск воды (без изменений)
   playMiss() {
     this.init();
     this.sweep(1200, 400, 0.3, 'sine', 0.15);
@@ -781,6 +787,8 @@ const G = {
   myShots: null,
   enemyShots: null,
   enemyRevealed: null,
+  // Клетки, которые точно пустые (вокруг потопленных кораблей врага)
+  enemyBlocked: null,
   ships: [],
   shipQueue: [],
   currentShipIdx: 0,
@@ -821,7 +829,7 @@ const connText = $('connText');
 })();
 
 // ===================================================
-// РИСОВАНИЕ КОРАБЛЯ (Canvas)
+// РИСОВАНИЕ КОРАБЛЯ
 // ===================================================
 function shipPalette(size) {
   switch (size) {
@@ -861,7 +869,7 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
   const top = 4;
   const bottom = H - 4;
 
-  // === КОРПУС ===
+  // Корпус
   ctx.beginPath();
   if (role === 'single') {
     const r = H * 0.36;
@@ -888,7 +896,7 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // === ПАЛУБА ===
+  // Палуба
   ctx.beginPath();
   if (role === 'single') {
     const r2 = H * 0.24;
@@ -912,7 +920,7 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
   ctx.fillStyle = p.deck;
   ctx.fill();
 
-  // === КАБИНА / РУБКА ===
+  // Кабина
   const cx = W / 2;
   const cy = H / 2;
 
@@ -934,7 +942,6 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
     ctx.strokeStyle = p.line;
     ctx.lineWidth = 1.2;
     ctx.strokeRect(cx + 2, cy - 7, 14, 14);
-    // Пушка на носу
     ctx.beginPath();
     ctx.arc(cx - 18, cy, 3.5, 0, Math.PI * 2);
     ctx.fillStyle = p.line;
@@ -951,7 +958,6 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
     ctx.strokeStyle = p.line;
     ctx.lineWidth = 1.2;
     ctx.strokeRect(cx - 16, cy - 7, 14, 14);
-    // Винт
     ctx.beginPath();
     ctx.moveTo(W - 4, cy - 5);
     ctx.lineTo(W + 6, cy);
@@ -969,7 +975,6 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
 
   ctx.restore();
 
-  // === ФИЛЬТРЫ ===
   if (isSunk) {
     canvas.style.filter = 'brightness(0.2) contrast(1.8) drop-shadow(0 0 4px #ff0000)';
   } else if (isHit) {
@@ -980,7 +985,7 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
 }
 
 // ===================================================
-// ОПРЕДЕЛЕНИЕ РОЛИ И РАЗМЕРА КОРАБЛЯ
+// ОПРЕДЕЛЕНИЕ РОЛИ/РАЗМЕРА КОРАБЛЯ
 // ===================================================
 function getShipRole(board, r, c) {
   const hasLeft  = c > 0 && board[r][c-1] === 1;
@@ -1019,6 +1024,57 @@ function getShipSize(board, r, c) {
     stack.push([cr+1, cc], [cr-1, cc], [cr, cc+1], [cr, cc-1]);
   }
   return count;
+}
+
+function getShipCells(board, r, c) {
+  const visited = new Set();
+  const stack = [[r, c]];
+  const cells = [];
+  while (stack.length) {
+    const [cr, cc] = stack.pop();
+    const key = cr + ',' + cc;
+    if (visited.has(key)) continue;
+    if (cr < 0 || cr >= BOARD_SIZE || cc < 0 || cc >= BOARD_SIZE) continue;
+    if (board[cr][cc] !== 1) continue;
+    visited.add(key);
+    cells.push([cr, cc]);
+    stack.push([cr+1, cc], [cr-1, cc], [cr, cc+1], [cr, cc-1]);
+  }
+  return cells;
+}
+
+function isSunkOnMyBoard(r, c) {
+  const cells = getShipCells(G.myBoard, r, c);
+  return cells.every(([sr, sc]) => G.enemyShots[sr][sc] === 2);
+}
+
+function isSunkOnEnemy(r, c) {
+  const cells = getShipCells(G.enemyRevealed, r, c);
+  return cells.every(([sr, sc]) => G.myShots[sr][sc] === 2);
+}
+
+// ===================================================
+// БЛОКИРОВКА КЛЕТОК ВОКРУГ ПОТОПЛЕННОГО КОРАБЛЯ
+// ===================================================
+function blockAroundSunkShip(shipCells) {
+  // Проходим по каждой клетке корабля и помечаем всех её соседей
+  // (включая диагонали), которые не входят в сам корабль и ещё не были
+  // ни подбиты, ни помечены, как "заблокированные".
+  const shipSet = new Set(shipCells.map(([r, c]) => r + ',' + c));
+
+  for (const [sr, sc] of shipCells) {
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = sr + dr;
+        const nc = sc + dc;
+        if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) continue;
+        if (shipSet.has(nr + ',' + nc)) continue;   // часть самого корабля
+        if (G.myShots[nr][nc] !== 0) continue;       // уже стреляли
+        G.enemyBlocked[nr][nc] = 1;
+      }
+    }
+  }
 }
 
 // ===================================================
@@ -1100,6 +1156,7 @@ function renderEnemyBoard() {
       cell.dataset.c = c;
 
       const shot = G.myShots[r][c];
+      const blocked = G.enemyBlocked[r][c] === 1;
 
       if (shot === 2 && G.enemyRevealed[r][c] === 1) {
         cell.classList.add('ship');
@@ -1122,6 +1179,10 @@ function renderEnemyBoard() {
         if (isSunkOnEnemy(r, c)) cell.classList.add('sunk');
       } else if (shot === 1) {
         cell.classList.add('miss');
+      } else if (blocked) {
+        // Клетка вокруг потопленного корабля — зачёркнута
+        cell.classList.add('blocked');
+        cell.classList.add('disabled');
       } else {
         if (canShoot) {
           cell.classList.add('clickable');
@@ -1134,34 +1195,6 @@ function renderEnemyBoard() {
       enemyBoardEl.appendChild(cell);
     }
   }
-}
-
-// ===================================================
-// ПОТОПЛЕНИЕ
-// ===================================================
-function getShipCells(board, r, c) {
-  const visited = new Set();
-  const stack = [[r, c]];
-  const cells = [];
-  while (stack.length) {
-    const [cr, cc] = stack.pop();
-    const key = cr + ',' + cc;
-    if (visited.has(key)) continue;
-    if (cr < 0 || cr >= BOARD_SIZE || cc < 0 || cc >= BOARD_SIZE) continue;
-    if (board[cr][cc] !== 1) continue;
-    visited.add(key);
-    cells.push([cr, cc]);
-    stack.push([cr+1, cc], [cr-1, cc], [cr, cc+1], [cr, cc-1]);
-  }
-  return cells;
-}
-function isSunkOnMyBoard(r, c) {
-  const cells = getShipCells(G.myBoard, r, c);
-  return cells.every(([sr, sc]) => G.enemyShots[sr][sc] === 2);
-}
-function isSunkOnEnemy(r, c) {
-  const cells = getShipCells(G.enemyRevealed, r, c);
-  return cells.every(([sr, sc]) => G.myShots[sr][sc] === 2);
 }
 
 // ===================================================
@@ -1377,6 +1410,7 @@ function startGame() {
   G.myShots = emptyBoard();
   G.enemyShots = emptyBoard();
   G.enemyRevealed = emptyBoard();
+  G.enemyBlocked = emptyBoard();
 
   G.ships = [];
   G.shipQueue = initShipQueue();
@@ -1582,6 +1616,7 @@ function shootAt(r, c) {
   if (G.turn !== 'my-turn') return;
   if (G.waitingForResult) return;
   if (G.myShots[r][c] !== 0) return;
+  if (G.enemyBlocked[r][c] === 1) return;   // защита от случайного выстрела
   Sound.playShoot();
   G.waitingForResult = true;
   send({ type: 'shot', row: r, col: c });
@@ -1649,6 +1684,9 @@ function handleShotResult(r, c, hit, sunk, win) {
     G.enemyRevealed[r][c] = 1;
     if (sunk) {
       revealSunkShip(r, c);
+      // Заблокировать клетки вокруг потопленного корабля
+      const cells = getShipCells(G.enemyRevealed, r, c);
+      blockAroundSunkShip(cells);
       setTimeout(() => Sound.playSunk(), 250);
       showNotification('🔥 КОРАБЛЬ ПОТОПЛЕН!');
     }
