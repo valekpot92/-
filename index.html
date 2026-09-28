@@ -54,6 +54,146 @@
   }
   @keyframes shine { to { background-position: 200% center; } }
 
+  /* ===== ТАЙМЕР ===== */
+  .timer-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .timer-box {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .timer-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .timer-svg circle {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+  }
+
+  .timer-bg-circle {
+    stroke: rgba(79,195,247,0.15);
+  }
+
+  .timer-progress-circle {
+    stroke: #4fc3f7;
+    stroke-dasharray: 339.292; /* 2 * PI * 54 */
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+
+  .timer-inner {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+  }
+
+  .timer-value {
+    font-size: 3em;
+    font-weight: bold;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: #4fc3f7;
+    text-shadow: 0 0 20px rgba(79,195,247,0.7);
+    transition: all 0.3s ease;
+  }
+
+  .timer-label {
+    font-size: 0.75em;
+    color: #b0d4e8;
+    letter-spacing: 2px;
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  /* Состояния таймера */
+  .timer-box.warning .timer-progress-circle {
+    stroke: #ffa726;
+  }
+  .timer-box.warning .timer-value {
+    color: #ffa726;
+    text-shadow: 0 0 20px rgba(255,167,38,0.7);
+  }
+
+  .timer-box.danger {
+    animation: timer-danger-pulse 0.6s ease-in-out infinite;
+  }
+  .timer-box.danger .timer-progress-circle {
+    stroke: #ff6b6b;
+  }
+  .timer-box.danger .timer-value {
+    color: #ff6b6b;
+    text-shadow: 0 0 25px rgba(255,107,107,1);
+  }
+  @keyframes timer-danger-pulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  .timer-box.my-turn {
+    filter: drop-shadow(0 0 20px rgba(79,195,247,0.5));
+  }
+  .timer-box.enemy-turn {
+    opacity: 0.55;
+    filter: grayscale(0.6);
+  }
+  .timer-box.enemy-turn .timer-progress-circle {
+    stroke: #ff6b6b;
+  }
+  .timer-box.enemy-turn .timer-value {
+    color: #ff6b6b;
+    text-shadow: 0 0 15px rgba(255,107,107,0.5);
+  }
+
+  .timer-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    background: rgba(79,195,247,0.1);
+    border: 2px solid rgba(79,195,247,0.3);
+    font-size: 1.1em;
+    font-weight: bold;
+    letter-spacing: 1px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+
+  .timer-status.my-turn {
+    border-color: #4fc3f7;
+    color: #4fc3f7;
+    box-shadow: 0 0 20px rgba(79,195,247,0.4);
+  }
+  .timer-status.enemy-turn {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+    box-shadow: 0 0 20px rgba(255,107,107,0.4);
+  }
+  .timer-status.waiting {
+    border-color: #ffa726;
+    color: #ffa726;
+  }
+
+  /* ===== ПАНЕЛЬ СТАТУСА ===== */
   .status-panel {
     text-align: center; margin-bottom: 20px; padding: 15px 30px;
     background: rgba(79,195,247,0.1);
@@ -132,7 +272,6 @@
     box-shadow: 0 0 20px rgba(255,213,79,1);
   }
 
-  /* ===== КОРАБЛИ (CANVAS) ===== */
   .cell.ship {
     background: rgba(10,30,50,0.3);
     padding: 0;
@@ -158,7 +297,7 @@
     box-shadow: inset 0 0 15px rgba(239,83,80,0.8);
   }
 
-  /* ===== ЗАЧЁРКНУТЫЕ КЛЕТКИ ВОКРУГ ПОТОПЛЕННЫХ ===== */
+  /* Заблокированные клетки вокруг потопленных */
   .cell.blocked {
     background: linear-gradient(135deg, rgba(60,60,60,0.7), rgba(30,30,30,0.85)) !important;
     cursor: not-allowed;
@@ -184,7 +323,6 @@
     box-shadow: none !important;
   }
 
-  /* Попадание */
   .cell.hit {
     background: linear-gradient(135deg, #ff4444, #cc0000) !important;
     animation: explode 0.6s ease-out;
@@ -211,7 +349,6 @@
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
   }
 
-  /* Промах */
   .cell.miss {
     background: linear-gradient(135deg, #0d2842 0%, #081a2c 100%);
     animation: splash 0.5s ease-out;
@@ -227,7 +364,6 @@
     100% { transform: scale(1) translateY(0); opacity: 0.7; }
   }
 
-  /* Потоплен */
   .cell.sunk {
     background: linear-gradient(135deg, #4a0000, #1a0000) !important;
     box-shadow: inset 0 0 20px #ff0000;
@@ -400,11 +536,15 @@
     .cell { font-size: 1.2em; }
     .room-code-box { font-size: 1.8em; letter-spacing: 5px; }
     .copy-box input { width: 280px; font-size: 0.8em; }
+    .timer-box { width: 110px; height: 110px; }
+    .timer-value { font-size: 2.4em; }
   }
   @media (max-width: 700px) {
     .board { width: 280px; height: 280px; }
     .game-area { gap: 20px; }
     .board-wrapper { padding: 12px; }
+    .timer-box { width: 100px; height: 100px; }
+    .timer-value { font-size: 2em; }
   }
 </style>
 </head>
@@ -423,7 +563,8 @@
       <li>Один игрок создаёт игру и получает код</li>
       <li>Он отправляет ссылку-приглашение другу</li>
       <li>Друг открывает ссылку и подключается</li>
-      <li>Играете в реальном времени!</li>
+      <li>У каждого хода — таймер 45 секунд</li>
+      <li>Не успел — ход переходит сопернику</li>
       <li>Вокруг потопленных кораблей клетки зачёркиваются</li>
     </ul>
   </div>
@@ -499,6 +640,24 @@
     </div>
   </div>
 
+  <!-- ТАЙМЕР -->
+  <div class="timer-container">
+    <div class="timer-box" id="timerBox">
+      <svg class="timer-svg" viewBox="0 0 120 120">
+        <circle class="timer-bg-circle" cx="60" cy="60" r="54"></circle>
+        <circle class="timer-progress-circle" id="timerProgress" cx="60" cy="60" r="54"></circle>
+      </svg>
+      <div class="timer-inner">
+        <div class="timer-value" id="timerValue">45</div>
+        <div class="timer-label">СЕК</div>
+      </div>
+    </div>
+    <div class="timer-status waiting" id="timerStatus">
+      <span>⏳</span>
+      <span id="timerStatusText">Ожидание...</span>
+    </div>
+  </div>
+
   <div class="status-panel" id="statusPanel">
     <span class="status-text" id="statusText">Расстановка кораблей...</span>
   </div>
@@ -541,6 +700,116 @@
 <div class="notification" id="notification"></div>
 
 <script>
+// ===================================================
+// КОНСТАНТЫ
+// ===================================================
+const BOARD_SIZE = 10;
+const TURN_TIME = 45;                 // секунд на ход
+const TIMER_CIRCUMFERENCE = 2 * Math.PI * 54;  // = 339.292
+const SHIPS = [
+  { size: 4, count: 1 },
+  { size: 3, count: 2 },
+  { size: 2, count: 3 },
+  { size: 1, count: 4 }
+];
+const TOTAL_SHIP_CELLS = 20;
+
+// ===================================================
+// ТАЙМЕР ХОДА
+// ===================================================
+const TurnTimer = {
+  secondsLeft: TURN_TIME,
+  intervalId: null,
+  tickIntervalId: null,
+  lastTickSecond: -1,
+  active: false,
+  onExpire: null,
+
+  start(onExpire) {
+    this.stop();
+    this.secondsLeft = TURN_TIME;
+    this.lastTickSecond = -1;
+    this.active = true;
+    this.onExpire = onExpire;
+
+    this.render();
+
+    // Обновление раз в секунду
+    this.intervalId = setInterval(() => {
+      if (!this.active) return;
+      this.secondsLeft--;
+      if (this.secondsLeft <= 0) {
+        this.secondsLeft = 0;
+        this.render();
+        this.stop();
+        if (typeof this.onExpire === 'function') this.onExpire();
+        return;
+      }
+      this.render();
+      // Звук-тик в последние 10 секунд
+      if (this.secondsLeft <= 10 && this.secondsLeft !== this.lastTickSecond) {
+        this.lastTickSecond = this.secondsLeft;
+        Sound.playTick();
+      }
+    }, 1000);
+  },
+
+  stop() {
+    this.active = false;
+    if (this.intervalId) { clearInterval(this.intervalId); this.intervalId = null; }
+  },
+
+  reset() {
+    this.stop();
+    this.secondsLeft = TURN_TIME;
+    this.render();
+  },
+
+  render() {
+    const valueEl = document.getElementById('timerValue');
+    const progressEl = document.getElementById('timerProgress');
+    const boxEl = document.getElementById('timerBox');
+
+    valueEl.textContent = this.secondsLeft;
+
+    // Круговая шкала
+    const ratio = this.secondsLeft / TURN_TIME;
+    const offset = TIMER_CIRCUMFERENCE * (1 - ratio);
+    progressEl.style.strokeDashoffset = offset;
+
+    // Цветовые состояния
+    boxEl.classList.remove('warning', 'danger');
+    if (this.secondsLeft <= 10 && this.secondsLeft > 0) {
+      boxEl.classList.add('danger');
+    } else if (this.secondsLeft <= 20 && this.secondsLeft > 0) {
+      boxEl.classList.add('warning');
+    }
+  },
+
+  // Установить "мой ход" / "не мой ход" / "ожидание"
+  setStatus(status) {
+    const boxEl = document.getElementById('timerBox');
+    const statusEl = document.getElementById('timerStatus');
+    const statusTextEl = document.getElementById('timerStatusText');
+
+    boxEl.classList.remove('my-turn', 'enemy-turn');
+    statusEl.classList.remove('my-turn', 'enemy-turn', 'waiting');
+
+    if (status === 'my') {
+      boxEl.classList.add('my-turn');
+      statusEl.classList.add('my-turn');
+      statusTextEl.textContent = 'ВАШ ХОД';
+    } else if (status === 'enemy') {
+      boxEl.classList.add('enemy-turn');
+      statusEl.classList.add('enemy-turn');
+      statusTextEl.textContent = 'ХОД СОПЕРНИКА';
+    } else {
+      statusEl.classList.add('waiting');
+      statusTextEl.textContent = 'ОЖИДАНИЕ';
+    }
+  }
+};
+
 // ===================================================
 // ЗВУКОВОЙ ДВИЖОК
 // ===================================================
@@ -685,6 +954,21 @@ const Sound = {
     this.tone(1400, 0.05, 'sine', 0.08);
   },
 
+  // Тик таймера
+  playTick() {
+    this.init();
+    this.tone(1600, 0.08, 'square', 0.12);
+  },
+
+  // Время истекло — тревожный звук
+  playTimeout() {
+    this.init();
+    this.tone(440, 0.3, 'sawtooth', 0.25, 0);
+    this.tone(330, 0.4, 'sawtooth', 0.25, 0.15);
+    this.tone(220, 0.6, 'sawtooth', 0.3, 0.3);
+    this.noise(0.4, 0.2, 500, 0.1, 'lowpass', 1.2);
+  },
+
   playVictory() {
     this.init();
     const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
@@ -760,18 +1044,6 @@ function toggleSound() {
 document.addEventListener('click', () => Sound.init(), { once: true });
 
 // ===================================================
-// КОНСТАНТЫ
-// ===================================================
-const BOARD_SIZE = 10;
-const SHIPS = [
-  { size: 4, count: 1 },
-  { size: 3, count: 2 },
-  { size: 2, count: 3 },
-  { size: 1, count: 4 }
-];
-const TOTAL_SHIP_CELLS = 20;
-
-// ===================================================
 // СОСТОЯНИЕ
 // ===================================================
 const G = {
@@ -787,7 +1059,6 @@ const G = {
   myShots: null,
   enemyShots: null,
   enemyRevealed: null,
-  // Клетки, которые точно пустые (вокруг потопленных кораблей врага)
   enemyBlocked: null,
   ships: [],
   shipQueue: [],
@@ -869,7 +1140,6 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
   const top = 4;
   const bottom = H - 4;
 
-  // Корпус
   ctx.beginPath();
   if (role === 'single') {
     const r = H * 0.36;
@@ -896,7 +1166,6 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // Палуба
   ctx.beginPath();
   if (role === 'single') {
     const r2 = H * 0.24;
@@ -920,7 +1189,6 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
   ctx.fillStyle = p.deck;
   ctx.fill();
 
-  // Кабина
   const cx = W / 2;
   const cy = H / 2;
 
@@ -985,7 +1253,7 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
 }
 
 // ===================================================
-// ОПРЕДЕЛЕНИЕ РОЛИ/РАЗМЕРА КОРАБЛЯ
+// ОПРЕДЕЛЕНИЕ РОЛИ/РАЗМЕРА
 // ===================================================
 function getShipRole(board, r, c) {
   const hasLeft  = c > 0 && board[r][c-1] === 1;
@@ -1053,15 +1321,8 @@ function isSunkOnEnemy(r, c) {
   return cells.every(([sr, sc]) => G.myShots[sr][sc] === 2);
 }
 
-// ===================================================
-// БЛОКИРОВКА КЛЕТОК ВОКРУГ ПОТОПЛЕННОГО КОРАБЛЯ
-// ===================================================
 function blockAroundSunkShip(shipCells) {
-  // Проходим по каждой клетке корабля и помечаем всех её соседей
-  // (включая диагонали), которые не входят в сам корабль и ещё не были
-  // ни подбиты, ни помечены, как "заблокированные".
   const shipSet = new Set(shipCells.map(([r, c]) => r + ',' + c));
-
   for (const [sr, sc] of shipCells) {
     for (let dr = -1; dr <= 1; dr++) {
       for (let dc = -1; dc <= 1; dc++) {
@@ -1069,8 +1330,8 @@ function blockAroundSunkShip(shipCells) {
         const nr = sr + dr;
         const nc = sc + dc;
         if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) continue;
-        if (shipSet.has(nr + ',' + nc)) continue;   // часть самого корабля
-        if (G.myShots[nr][nc] !== 0) continue;       // уже стреляли
+        if (shipSet.has(nr + ',' + nc)) continue;
+        if (G.myShots[nr][nc] !== 0) continue;
         G.enemyBlocked[nr][nc] = 1;
       }
     }
@@ -1082,7 +1343,6 @@ function blockAroundSunkShip(shipCells) {
 // ===================================================
 function renderMyBoard(preview = null) {
   myBoardEl.innerHTML = '';
-
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
       const cell = document.createElement('div');
@@ -1096,15 +1356,11 @@ function renderMyBoard(preview = null) {
         const info = getShipRole(G.myBoard, r, c);
         const isHit = G.enemyShots[r][c] === 2;
         const isSunk = isHit && isSunkOnMyBoard(r, c);
-
         const canvas = document.createElement('canvas');
         canvas.className = 'ship-canvas';
-        canvas.width = 100;
-        canvas.height = 100;
+        canvas.width = 100; canvas.height = 100;
         cell.appendChild(canvas);
-        setTimeout(() => {
-          drawShipOnCanvas(canvas, size, info.role, info.horizontal, isSunk, isHit);
-        }, 0);
+        setTimeout(() => drawShipOnCanvas(canvas, size, info.role, info.horizontal, isSunk, isHit), 0);
       }
 
       if (G.enemyShots[r][c] === 2) {
@@ -1143,10 +1399,7 @@ function renderMyBoard(preview = null) {
 // ===================================================
 function renderEnemyBoard() {
   enemyBoardEl.innerHTML = '';
-
-  const canShoot = G.phase === 'battle'
-                && G.turn === 'my-turn'
-                && !G.waitingForResult;
+  const canShoot = G.phase === 'battle' && G.turn === 'my-turn' && !G.waitingForResult;
 
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
@@ -1163,15 +1416,11 @@ function renderEnemyBoard() {
         const size = getShipSize(G.enemyRevealed, r, c);
         const info = getShipRole(G.enemyRevealed, r, c);
         const isSunk = isSunkOnEnemy(r, c);
-
         const canvas = document.createElement('canvas');
         canvas.className = 'ship-canvas';
-        canvas.width = 100;
-        canvas.height = 100;
+        canvas.width = 100; canvas.height = 100;
         cell.appendChild(canvas);
-        setTimeout(() => {
-          drawShipOnCanvas(canvas, size, info.role, info.horizontal, isSunk, true);
-        }, 0);
+        setTimeout(() => drawShipOnCanvas(canvas, size, info.role, info.horizontal, isSunk, true), 0);
       }
 
       if (shot === 2) {
@@ -1180,9 +1429,7 @@ function renderEnemyBoard() {
       } else if (shot === 1) {
         cell.classList.add('miss');
       } else if (blocked) {
-        // Клетка вокруг потопленного корабля — зачёркнута
-        cell.classList.add('blocked');
-        cell.classList.add('disabled');
+        cell.classList.add('blocked', 'disabled');
       } else {
         if (canShoot) {
           cell.classList.add('clickable');
@@ -1217,6 +1464,7 @@ function log(...args) { console.log('[SeaBattle]', ...args); }
 // МЕНЮ
 // ===================================================
 function backToMenu() {
+  TurnTimer.stop();
   try { if (G.conn) G.conn.close(); } catch(e){}
   try { if (G.peer) G.peer.destroy(); } catch(e){}
   G.conn = null; G.peer = null; G.connected = false;
@@ -1255,7 +1503,6 @@ function createRoom() {
   G.myPlayerNum = 1;
 
   $('roomCodeDisplay').textContent = roomCode;
-
   const base = window.location.origin + window.location.pathname;
   $('linkInput').value = `${base}?room=${roomCode}`;
   $('waitingText').textContent = '⏳ Инициализация сервера...';
@@ -1272,7 +1519,6 @@ function createRoom() {
   });
 
   G.peer.on('open', () => {
-    log('Peer открыт');
     $('waitingText').textContent = '⏳ Ожидание подключения друга...';
   });
 
@@ -1359,6 +1605,7 @@ function setupConnection() {
     G.connected = false;
     connDot.classList.remove('online');
     connText.textContent = 'Соединение потеряно';
+    TurnTimer.stop();
     showNotification('⚠️ Соперник отключился');
   });
   G.conn.on('error', (err) => console.error('Conn error:', err));
@@ -1382,6 +1629,10 @@ function handleMessage(msg) {
       break;
     case 'shotResult':
       handleShotResult(msg.row, msg.col, msg.hit, msg.sunk, msg.win);
+      break;
+    case 'timeout':
+      // Соперник не успел — теперь наш ход
+      handleEnemyTimeout();
       break;
     case 'surrender':
       showNotification('🏆 Соперник сдался!');
@@ -1416,6 +1667,10 @@ function startGame() {
   G.shipQueue = initShipQueue();
   G.currentShipIdx = 0;
   G.horizontal = true;
+
+  TurnTimer.reset();
+  TurnTimer.setStatus('waiting');
+  TurnTimer.render();
 
   renderMyBoard();
   renderEnemyBoard();
@@ -1572,7 +1827,46 @@ function startBattlePhase() {
   renderEnemyBoard();
   Sound.startMusic();
   Sound.playNotify();
-  if (G.turn === 'my-turn') showNotification('🎯 Ваш ход первым!');
+  if (G.turn === 'my-turn') {
+    showNotification('🎯 Ваш ход первым!');
+    startMyTurnTimer();
+  } else {
+    TurnTimer.reset();
+    TurnTimer.setStatus('enemy');
+  }
+}
+
+// ===================================================
+// ЗАПУСК ТАЙМЕРА ДЛЯ МОЕГО ХОДА
+// ===================================================
+function startMyTurnTimer() {
+  TurnTimer.setStatus('my');
+  TurnTimer.start(() => {
+    // Время вышло — отправляем сопернику сообщение о таймауте
+    Sound.playTimeout();
+    showNotification('⏱ Время вышло! Ход переходит сопернику');
+    G.turn = 'enemy-turn';
+    G.waitingForResult = false;
+    send({ type: 'timeout' });
+    TurnTimer.reset();
+    TurnTimer.setStatus('enemy');
+    updateBattleUI();
+    renderEnemyBoard();
+  });
+}
+
+// ===================================================
+// СОПЕРНИК НЕ УСПЕЛ
+// ===================================================
+function handleEnemyTimeout() {
+  // Теперь наш ход, и запускаем таймер
+  G.turn = 'my-turn';
+  G.waitingForResult = false;
+  updateBattleUI();
+  renderEnemyBoard();
+  showNotification('⏱ Соперник не успел! Ваш ход');
+  Sound.playNotify();
+  startMyTurnTimer();
 }
 
 function updateBattleUI() {
@@ -1616,7 +1910,11 @@ function shootAt(r, c) {
   if (G.turn !== 'my-turn') return;
   if (G.waitingForResult) return;
   if (G.myShots[r][c] !== 0) return;
-  if (G.enemyBlocked[r][c] === 1) return;   // защита от случайного выстрела
+  if (G.enemyBlocked[r][c] === 1) return;
+
+  // Останавливаем таймер — ждём результат
+  TurnTimer.stop();
+
   Sound.playShoot();
   G.waitingForResult = true;
   send({ type: 'shot', row: r, col: c });
@@ -1654,6 +1952,7 @@ function handleEnemyShot(r, c) {
     updateScore();
     if (allSunk) {
       G.phase = 'gameover'; G.turn = 'waiting';
+      TurnTimer.stop();
       setTimeout(() => showWinScreen(false), 800);
       return;
     }
@@ -1669,6 +1968,8 @@ function handleEnemyShot(r, c) {
     updateBattleUI();
     renderEnemyBoard();
     showNotification('🎯 Ваш ход!');
+    // Запускаем таймер на наш ход
+    startMyTurnTimer();
   }
 }
 
@@ -1684,7 +1985,6 @@ function handleShotResult(r, c, hit, sunk, win) {
     G.enemyRevealed[r][c] = 1;
     if (sunk) {
       revealSunkShip(r, c);
-      // Заблокировать клетки вокруг потопленного корабля
       const cells = getShipCells(G.enemyRevealed, r, c);
       blockAroundSunkShip(cells);
       setTimeout(() => Sound.playSunk(), 250);
@@ -1692,16 +1992,25 @@ function handleShotResult(r, c, hit, sunk, win) {
     }
     if (win) {
       G.phase = 'gameover'; G.turn = 'waiting';
+      TurnTimer.stop();
       renderEnemyBoard();
       updateScore();
       setTimeout(() => showWinScreen(true), 800);
       return;
     }
+    // Ход остаётся у нас — перезапускаем таймер
     G.turn = 'my-turn';
+    updateBattleUI();
+    renderEnemyBoard();
+    renderMyBoard();
+    startMyTurnTimer();
+    return;
   } else {
     Sound.playMiss();
     G.myShots[r][c] = 1;
     G.turn = 'enemy-turn';
+    TurnTimer.reset();
+    TurnTimer.setStatus('enemy');
   }
 
   updateBattleUI();
@@ -1731,6 +2040,7 @@ function revealSunkShip(r, c) {
 // ===================================================
 function leaveGame() {
   if (!confirm('Сдаться и завершить игру?')) return;
+  TurnTimer.stop();
   Sound.playDefeat();
   send({ type: 'surrender' });
   showWinScreen(false);
@@ -1738,6 +2048,7 @@ function leaveGame() {
 
 function showWinScreen(iWon) {
   G.phase = 'gameover';
+  TurnTimer.stop();
   Sound.stopMusic();
   if (iWon) Sound.playVictory(); else Sound.playDefeat();
   showOnly('winScreen');
@@ -1751,6 +2062,7 @@ function showWinScreen(iWon) {
 }
 
 function restartGame() {
+  TurnTimer.stop();
   send({ type: 'restart' });
   setTimeout(() => location.reload(), 300);
 }
