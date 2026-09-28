@@ -97,54 +97,135 @@
   .board {
     display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr);
     gap: 2px; width: 380px; height: 380px;
-    background: rgba(0,0,0,0.3); padding: 5px; border-radius: 10px;
+    background: linear-gradient(180deg, rgba(10,40,70,0.6), rgba(5,25,45,0.8));
+    padding: 5px; border-radius: 10px;
+    position: relative;
   }
+  /* Анимированные блики воды на фоне поля */
+  .board::before {
+    content: '';
+    position: absolute; inset: 5px;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(79,195,247,0.15) 0%, transparent 3%),
+      radial-gradient(circle at 70% 60%, rgba(79,195,247,0.12) 0%, transparent 3%),
+      radial-gradient(circle at 40% 80%, rgba(79,195,247,0.1) 0%, transparent 3%),
+      radial-gradient(circle at 85% 20%, rgba(79,195,247,0.13) 0%, transparent 3%);
+    animation: water-shimmer 8s ease-in-out infinite;
+    pointer-events: none;
+    border-radius: 6px;
+  }
+  @keyframes water-shimmer {
+    0%,100% { opacity: 0.6; transform: translate(0,0); }
+    50% { opacity: 1; transform: translate(3px,-3px); }
+  }
+
   .cell {
-    background: linear-gradient(135deg, #1e4d6b 0%, #163a52 100%);
-    border-radius: 3px; cursor: pointer; transition: all 0.2s ease;
+    background: linear-gradient(135deg, rgba(30,77,107,0.85) 0%, rgba(22,58,82,0.9) 100%);
+    border-radius: 3px;
+    cursor: pointer; transition: all 0.2s ease;
     position: relative; display: flex; align-items: center; justify-content: center;
     font-size: 1.5em; overflow: hidden;
+    z-index: 1;
   }
   .cell.clickable:hover {
-    background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
-    transform: scale(1.15); z-index: 2;
+    background: linear-gradient(135deg, rgba(255,213,79,0.7) 0%, rgba(255,179,0,0.7) 100%);
+    transform: scale(1.15); z-index: 5;
     box-shadow: 0 0 20px rgba(255,213,79,1);
   }
-  .cell.ship { background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); }
-  .cell.ship::after {
-    content: ''; position: absolute; inset: 2px;
-    background: linear-gradient(135deg, #718096, #4a5568); border-radius: 2px;
+
+  /* ===== РИСУНКИ КОРАБЛЕЙ ===== */
+  .cell.ship {
+    background: rgba(10,30,50,0.5);
+    padding: 0;
+    z-index: 2;
   }
+
+  .cell.ship .ship-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.7));
+    transition: filter 0.3s ease;
+  }
+
+  .cell.ship:hover .ship-svg {
+    filter: drop-shadow(0 0 8px rgba(255,213,79,0.9));
+  }
+
+  /* Превью при расстановке */
+  .cell.preview-valid {
+    background: rgba(102,187,106,0.5) !important;
+    box-shadow: inset 0 0 15px rgba(102,187,106,0.8);
+  }
+  .cell.preview-invalid {
+    background: rgba(239,83,80,0.5) !important;
+    box-shadow: inset 0 0 15px rgba(239,83,80,0.8);
+  }
+
+  /* Попадание */
   .cell.hit {
     background: linear-gradient(135deg, #ff4444, #cc0000) !important;
     animation: explode 0.6s ease-out;
+    z-index: 3;
+  }
+  .cell.hit .ship-svg {
+    filter: brightness(0.3) drop-shadow(0 0 10px #ff6600) saturate(3);
+    opacity: 0.6;
   }
   .cell.hit::before {
-    content: '💥'; position: absolute; z-index: 3; font-size: 1.4em;
+    content: '💥';
+    position: absolute; z-index: 4; font-size: 1.3em;
     animation: boom 0.8s ease-out;
+    pointer-events: none;
+    text-shadow: 0 0 10px #ff4400;
   }
-  .cell.hit::after { display: none; }
   @keyframes explode {
     0% { transform: scale(1); }
     50% { transform: scale(1.4); box-shadow: 0 0 30px #ff0000; }
     100% { transform: scale(1); }
   }
   @keyframes boom {
-    0% { transform: scale(0); opacity: 0; }
-    50% { transform: scale(1.5); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1.6) rotate(15deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
   }
+
+  /* Промах */
   .cell.miss {
     background: linear-gradient(135deg, #0d2842 0%, #081a2c 100%);
     animation: splash 0.5s ease-out;
   }
-  .cell.miss::before { content: '💧'; position: absolute; font-size: 1.2em; animation: drop 0.6s ease-out; }
+  .cell.miss::before {
+    content: '💧'; position: absolute; font-size: 1.2em;
+    animation: drop 0.6s ease-out;
+    opacity: 0.8;
+  }
   @keyframes splash { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
   @keyframes drop {
     0% { transform: scale(0) translateY(-20px); opacity: 0; }
     100% { transform: scale(1) translateY(0); opacity: 0.7; }
   }
-  .cell.sunk { background: linear-gradient(135deg, #8b0000, #4a0000) !important; box-shadow: inset 0 0 15px #ff0000; }
+
+  /* Потоплен */
+  .cell.sunk {
+    background: linear-gradient(135deg, #4a0000, #1a0000) !important;
+    box-shadow: inset 0 0 20px #ff0000;
+  }
+  .cell.sunk .ship-svg {
+    filter: brightness(0.15) contrast(1.8) drop-shadow(0 0 4px #ff0000);
+  }
+  .cell.sunk::after {
+    content: '🔥';
+    position: absolute; z-index: 4; font-size: 1em;
+    animation: fire-flicker 1s ease-in-out infinite;
+  }
+  @keyframes fire-flicker {
+    0%,100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+
   .cell.disabled { cursor: not-allowed; }
 
   .controls { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
@@ -441,7 +522,7 @@
 
 <script>
 // ===================================================
-// ЗВУКОВОЙ ДВИЖОК (Web Audio API — без файлов!)
+// ЗВУКОВОЙ ДВИЖОК
 // ===================================================
 const Sound = {
   ctx: null,
@@ -466,10 +547,7 @@ const Sound = {
       this.musicGain.connect(this.masterGain);
 
       if (this.ctx.state === 'suspended') this.ctx.resume();
-    } catch (e) {
-      console.warn('Аудио не поддерживается:', e);
-      this.enabled = false;
-    }
+    } catch (e) { this.enabled = false; }
   },
 
   tone(freq, duration, type = 'sine', volume = 0.3, delay = 0) {
@@ -514,15 +592,12 @@ const Sound = {
     for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
-
     const filter = this.ctx.createBiquadFilter();
     filter.type = filterType;
     filter.frequency.setValueAtTime(filterFreq, t);
-
     const gain = this.ctx.createGain();
     gain.gain.setValueAtTime(volume, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
-
     source.connect(filter);
     filter.connect(gain);
     gain.connect(this.masterGain);
@@ -530,26 +605,22 @@ const Sound = {
     source.stop(t + duration);
   },
 
-  // === ИГРОВЫЕ ЗВУКИ ===
   playShoot() {
     this.init();
     this.sweep(800, 200, 0.15, 'square', 0.15);
     this.noise(0.1, 0.08, 2000, 0, 'highpass');
   },
-
   playHit() {
     this.init();
     this.tone(80, 0.5, 'sawtooth', 0.35);
     this.tone(120, 0.4, 'square', 0.2, 0.02);
     this.noise(0.4, 0.3, 400);
   },
-
   playMiss() {
     this.init();
     this.sweep(1200, 400, 0.3, 'sine', 0.15);
     this.noise(0.25, 0.15, 1500, 0.05, 'bandpass');
   },
-
   playSunk() {
     this.init();
     this.tone(523.25, 0.6, 'sine', 0.25, 0);
@@ -558,24 +629,20 @@ const Sound = {
     this.tone(1046.5, 0.8, 'sine', 0.3, 0.24);
     this.noise(0.5, 0.2, 300, 0.1);
   },
-
   playReady() {
     this.init();
     this.tone(660, 0.15, 'sine', 0.2, 0);
     this.tone(880, 0.25, 'sine', 0.25, 0.12);
   },
-
   playNotify() {
     this.init();
     this.tone(1200, 0.15, 'sine', 0.15);
     this.tone(1600, 0.2, 'sine', 0.12, 0.08);
   },
-
   playClick() {
     this.init();
     this.tone(1400, 0.05, 'sine', 0.08);
   },
-
   playVictory() {
     this.init();
     const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
@@ -584,7 +651,6 @@ const Sound = {
     this.tone(1318.5, 1.2, 'sine', 0.25, 0.8);
     this.tone(1567.98, 1.2, 'sine', 0.2, 0.8);
   },
-
   playDefeat() {
     this.init();
     const notes = [523.25, 466.16, 415.3, 349.23];
@@ -592,14 +658,11 @@ const Sound = {
     this.tone(261.63, 1.5, 'sine', 0.3, 0.8);
     this.tone(196, 1.5, 'sine', 0.25, 0.8);
   },
-
-  // === ФОНОВАЯ МУЗЫКА ===
   startMusic() {
     if (!this.enabled) return;
     this.init();
     if (!this.ctx || this.musicPlaying) return;
     this.musicPlaying = true;
-
     const playDrone = () => {
       if (!this.musicPlaying || !this.ctx) return;
       const now = this.ctx.currentTime;
@@ -618,12 +681,8 @@ const Sound = {
         osc.stop(now + 9);
       });
     };
-
     playDrone();
-    this._musicInterval = setInterval(() => {
-      if (this.musicPlaying) playDrone();
-    }, 8000);
-
+    this._musicInterval = setInterval(() => { if (this.musicPlaying) playDrone(); }, 8000);
     this._sparkleInterval = setInterval(() => {
       if (!this.musicPlaying || !this.enabled) return;
       if (Math.random() < 0.4) {
@@ -632,7 +691,6 @@ const Sound = {
       }
     }, 4000);
   },
-
   stopMusic() {
     this.musicPlaying = false;
     if (this._musicInterval) clearInterval(this._musicInterval);
@@ -643,7 +701,6 @@ const Sound = {
 function toggleSound() {
   Sound.init();
   Sound.enabled = !Sound.enabled;
-
   const btn = document.getElementById('soundToggle');
   if (Sound.enabled) {
     btn.textContent = '🔊 ЗВУК ВКЛ';
@@ -656,8 +713,6 @@ function toggleSound() {
     Sound.stopMusic();
   }
 }
-
-// Разбудить аудио при первом клике
 document.addEventListener('click', () => Sound.init(), { once: true });
 
 // ===================================================
@@ -702,6 +757,115 @@ function emptyBoard() {
 }
 
 // ===================================================
+// ГЕНЕРАТОР SVG-КОРАБЛЕЙ
+// ===================================================
+// Каждый корабль рисуется как SVG в viewBox 100x100
+// Каждая палуба знает свою роль: nose / middle / tail / single
+
+function shipPalette(size) {
+  // Разные цвета по размеру (чем больше — тем солиднее)
+  switch (size) {
+    case 1: return { hull: '#c7d1d8', hullTop: '#e8eef2', deck: '#8fa3b0', line: '#5a6f7d', cabin: '#4fc3f7' };
+    case 2: return { hull: '#a5d6a7', hullTop: '#c8e6c9', deck: '#66bb6a', line: '#2e7d32', cabin: '#a5d6a7' };
+    case 3: return { hull: '#90caf9', hullTop: '#bbdefb', deck: '#42a5f5', line: '#1565c0', cabin: '#ffd54f' };
+    case 4: return { hull: '#ffcc80', hullTop: '#ffe0b2', deck: '#ffa726', line: '#e65100', cabin: '#ff7043' };
+    default: return { hull: '#c7d1d8', hullTop: '#e8eef2', deck: '#8fa3b0', line: '#5a6f7d', cabin: '#4fc3f7' };
+  }
+}
+
+function shipSVG(size, role, horizontal, id) {
+  const p = shipPalette(size);
+  const rotate = horizontal ? '' : 'transform="rotate(90 50 50)"';
+
+  // Общие параметры корпуса
+  // Рисуем так, чтобы корабль занимал центр клетки и плавно переходил в соседнюю.
+  // У нас будет корпус по оси X — от края к краю, роль определяет форму левого/правого борта.
+  // - nose: острый или округлый левый край
+  // - tail: ровный или округлый правый край
+  // - middle: ровный по обоим краям
+  // - single: округлый по обоим краям
+
+  let hullPath;
+  const hullColor = p.hull;
+  const deckColor = p.deck;
+  const lineColor = p.line;
+  const cabinColor = p.cabin;
+
+  // Корпус: горизонтальная полоса по центру (y от 25 до 75)
+  // Левый край: если nose — точка, если middle/tail — прямая линия
+  // Правый край: если tail — прямая линия или округлость, если nose/middle — прямая (склеится с соседом)
+
+  if (role === 'single') {
+    // Катер — овальный
+    hullPath = `M 15,50 Q 15,25 40,25 L 60,25 Q 85,25 85,50 Q 85,75 60,75 L 40,75 Q 15,75 15,50 Z`;
+  } else if (role === 'nose') {
+    // Нос — острый слева, ровный справа
+    hullPath = `M 5,50 Q 5,35 20,30 L 100,25 L 100,75 L 20,70 Q 5,65 5,50 Z`;
+  } else if (role === 'tail') {
+    // Корма — ровный слева, округлый справа
+    hullPath = `M 0,25 L 80,25 Q 95,30 95,50 Q 95,70 80,75 L 0,75 Z`;
+  } else {
+    // Середина — ровная с обоих краёв
+    hullPath = `M 0,25 L 100,25 L 100,75 L 0,75 Z`;
+  }
+
+  // Верхняя палуба (светлая полоса поверх корпуса)
+  let deckPath;
+  if (role === 'single') {
+    deckPath = `M 30,50 Q 30,38 45,38 L 55,38 Q 70,38 70,50 Q 70,62 55,62 L 45,62 Q 30,62 30,50 Z`;
+  } else if (role === 'nose') {
+    deckPath = `M 15,50 Q 15,42 25,40 L 100,38 L 100,62 L 25,60 Q 15,58 15,50 Z`;
+  } else if (role === 'tail') {
+    deckPath = `M 0,38 L 78,38 Q 88,40 88,50 Q 88,60 78,62 L 0,62 Z`;
+  } else {
+    deckPath = `M 0,38 L 100,38 L 100,62 L 0,62 Z`;
+  }
+
+  // Кабина (в центре сегмента)
+  let cabin = '';
+  if (role === 'single') {
+    cabin = `<circle cx="50" cy="50" r="8" fill="${cabinColor}" stroke="${lineColor}" stroke-width="2"/>
+             <circle cx="50" cy="50" r="3" fill="${lineColor}"/>`;
+  } else if (role === 'nose') {
+    cabin = `<rect x="55" y="42" width="18" height="16" rx="2" fill="${cabinColor}" stroke="${lineColor}" stroke-width="1.5"/>
+             <circle cx="40" cy="50" r="3" fill="${lineColor}"/>`;
+  } else if (role === 'tail') {
+    cabin = `<rect x="35" y="42" width="18" height="16" rx="2" fill="${cabinColor}" stroke="${lineColor}" stroke-width="1.5"/>
+             <rect x="10" y="44" width="10" height="12" rx="1" fill="${lineColor}" opacity="0.6"/>`;
+  } else {
+    cabin = `<rect x="42" y="42" width="16" height="16" rx="2" fill="${cabinColor}" stroke="${lineColor}" stroke-width="1.5"/>`;
+  }
+
+  // Винт/след за кормой
+  let wake = '';
+  if (role === 'tail') {
+    wake = `<path d="M 95,50 Q 105,45 108,50 Q 105,55 95,50 Z" fill="rgba(255,255,255,0.4)" />`;
+  }
+
+  return `
+    <svg class="ship-svg" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <g ${rotate} style="transform-origin: 50px 50px;">
+        <!-- Тень-волна снизу -->
+        <ellipse cx="50" cy="80" rx="45" ry="5" fill="rgba(0,0,0,0.25)"/>
+
+        <!-- Корпус -->
+        <path d="${hullPath}" fill="${hullColor}" stroke="${lineColor}" stroke-width="2" stroke-linejoin="round"/>
+
+        <!-- Верхняя палуба -->
+        <path d="${deckPath}" fill="${deckColor}" opacity="0.9"/>
+
+        <!-- Кабина / деталь -->
+        ${cabin}
+
+        <!-- Обводка сверху для объёма -->
+        <path d="${hullPath}" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+      </g>
+      ${wake}
+    </svg>
+  `;
+}
+
+// ===================================================
 // DOM
 // ===================================================
 const $ = id => document.getElementById(id);
@@ -736,13 +900,11 @@ function showNotification(text) {
   clearTimeout(notification._t);
   notification._t = setTimeout(() => notification.classList.remove('show'), 1500);
 }
-
 function showOnly(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   $('gameContainer').classList.add('hidden');
   if (screenId) $(screenId).classList.remove('hidden');
 }
-
 function log(...args) { console.log('[SeaBattle]', ...args); }
 
 // ===================================================
@@ -751,19 +913,15 @@ function log(...args) { console.log('[SeaBattle]', ...args); }
 function backToMenu() {
   try { if (G.conn) G.conn.close(); } catch(e){}
   try { if (G.peer) G.peer.destroy(); } catch(e){}
-  G.conn = null;
-  G.peer = null;
-  G.connected = false;
+  G.conn = null; G.peer = null; G.connected = false;
   Sound.stopMusic();
   showOnly('menuScreen');
 }
-
 function showCreateScreen() {
   Sound.playClick();
   showOnly('createScreen');
   createRoom();
 }
-
 function showJoinScreen() {
   Sound.playClick();
   showOnly('joinScreen');
@@ -793,13 +951,10 @@ function createRoom() {
   $('roomCodeDisplay').textContent = roomCode;
 
   const base = window.location.origin + window.location.pathname;
-  const link = `${base}?room=${roomCode}`;
-  $('linkInput').value = link;
-
+  $('linkInput').value = `${base}?room=${roomCode}`;
   $('waitingText').textContent = '⏳ Инициализация сервера...';
 
   const peerId = 'seabattle-' + roomCode;
-
   G.peer = new Peer(peerId, {
     debug: 1,
     config: {
@@ -810,20 +965,15 @@ function createRoom() {
     }
   });
 
-  G.peer.on('open', (id) => {
-    log('Peer открыт:', id);
+  G.peer.on('open', () => {
+    log('Peer открыт');
     $('waitingText').textContent = '⏳ Ожидание подключения друга...';
   });
 
   G.peer.on('connection', (connection) => {
-    if (G.conn && G.conn.open) {
-      log('Уже есть подключение, отклоняем');
-      connection.close();
-      return;
-    }
+    if (G.conn && G.conn.open) { connection.close(); return; }
     G.conn = connection;
     setupConnection();
-
     G.conn.on('open', () => {
       showNotification('🎉 Друг подключился!');
       Sound.playNotify();
@@ -832,12 +982,8 @@ function createRoom() {
   });
 
   G.peer.on('error', (err) => {
-    console.error('Peer error:', err);
-    if (err.type === 'unavailable-id') {
-      createRoom();
-    } else {
-      $('waitingText').textContent = '❌ Ошибка: ' + err.type;
-    }
+    if (err.type === 'unavailable-id') createRoom();
+    else $('waitingText').textContent = '❌ Ошибка: ' + err.type;
   });
 }
 
@@ -847,11 +993,7 @@ function createRoom() {
 function joinGame() {
   const code = $('joinCodeInput').value.trim().toUpperCase();
   const errEl = $('joinError');
-
-  if (code.length !== 6) {
-    errEl.textContent = '❌ Код должен содержать 6 символов';
-    return;
-  }
+  if (code.length !== 6) { errEl.textContent = '❌ Код должен содержать 6 символов'; return; }
 
   errEl.textContent = '🔄 Подключение...';
   G.isHost = false;
@@ -870,11 +1012,9 @@ function joinGame() {
   });
 
   let failed = false;
-
   G.peer.on('open', () => {
     const hostId = 'seabattle-' + code;
     G.conn = G.peer.connect(hostId, { reliable: true });
-
     G.conn.on('open', () => {
       failed = false;
       setupConnection();
@@ -885,14 +1025,10 @@ function joinGame() {
   });
 
   G.peer.on('error', (err) => {
-    console.error('Peer error:', err);
     if (failed) return;
     failed = true;
-    if (err.type === 'peer-unavailable') {
-      errEl.textContent = '❌ Комната не найдена. Проверьте код.';
-    } else {
-      errEl.textContent = '❌ Ошибка: ' + err.type;
-    }
+    if (err.type === 'peer-unavailable') errEl.textContent = '❌ Комната не найдена. Проверьте код.';
+    else errEl.textContent = '❌ Ошибка: ' + err.type;
   });
 
   setTimeout(() => {
@@ -912,26 +1048,18 @@ function setupConnection() {
   connDot.classList.add('online');
   connText.textContent = 'Подключено ✅';
 
-  G.conn.on('data', (data) => {
-    log('← Получено:', data);
-    handleMessage(data);
-  });
-
+  G.conn.on('data', (data) => { log('←', data); handleMessage(data); });
   G.conn.on('close', () => {
     G.connected = false;
     connDot.classList.remove('online');
     connText.textContent = 'Соединение потеряно';
     showNotification('⚠️ Соперник отключился');
   });
-
   G.conn.on('error', (err) => console.error('Conn error:', err));
 }
 
 function send(data) {
-  if (G.conn && G.conn.open) {
-    log('→ Отправлено:', data);
-    G.conn.send(data);
-  }
+  if (G.conn && G.conn.open) { log('→', data); G.conn.send(data); }
 }
 
 // ===================================================
@@ -995,6 +1123,51 @@ function initShipQueue() {
 }
 
 // ===================================================
+// КАКАЯ РОЛЬ У КЛЕТКИ КОРАБЛЯ (nose/middle/tail/single)
+// ===================================================
+function getShipRole(board, r, c) {
+  // Проверяем, часть какого корабля эта клетка.
+  // Идём влево и вправо / вверх и вниз
+  const hasLeft  = c > 0 && board[r][c-1] === 1;
+  const hasRight = c < BOARD_SIZE-1 && board[r][c+1] === 1;
+  const hasUp    = r > 0 && board[r-1][c] === 1;
+  const hasDown  = r < BOARD_SIZE-1 && board[r+1][c] === 1;
+
+  const horiz = hasLeft || hasRight;
+  const vert  = hasUp || hasDown;
+
+  if (!horiz && !vert) return { role: 'single', horizontal: true };
+
+  if (horiz) {
+    if (!hasLeft)  return { role: 'nose',   horizontal: true };
+    if (!hasRight) return { role: 'tail',   horizontal: true };
+    return { role: 'middle', horizontal: true };
+  } else {
+    if (!hasUp)   return { role: 'nose',   horizontal: false };
+    if (!hasDown) return { role: 'tail',   horizontal: false };
+    return { role: 'middle', horizontal: false };
+  }
+}
+
+function getShipSize(board, r, c) {
+  // Определяем размер корабля (обход всей клетки корабля)
+  const visited = new Set();
+  const stack = [[r, c]];
+  let count = 0;
+  while (stack.length) {
+    const [cr, cc] = stack.pop();
+    const key = cr + ',' + cc;
+    if (visited.has(key)) continue;
+    if (cr < 0 || cr >= BOARD_SIZE || cc < 0 || cc >= BOARD_SIZE) continue;
+    if (board[cr][cc] !== 1) continue;
+    visited.add(key);
+    count++;
+    stack.push([cr+1, cc], [cr-1, cc], [cr, cc+1], [cr, cc-1]);
+  }
+  return count;
+}
+
+// ===================================================
 // РЕНДЕР: МОЁ ПОЛЕ
 // ===================================================
 function renderMyBoard(preview = null) {
@@ -1007,28 +1180,34 @@ function renderMyBoard(preview = null) {
       cell.dataset.r = r;
       cell.dataset.c = c;
 
-      if (G.myBoard[r][c] === 1) cell.classList.add('ship');
+      if (G.myBoard[r][c] === 1) {
+        cell.classList.add('ship');
+        const size = getShipSize(G.myBoard, r, c);
+        const info = getShipRole(G.myBoard, r, c);
+        cell.innerHTML = shipSVG(size, info.role, info.horizontal, `${r}-${c}`);
+      }
 
+      // Попадание врага по мне
       if (G.enemyShots[r][c] === 2) {
         cell.classList.add('hit');
-        cell.classList.remove('ship');
-        if (G.myBoard[r][c] === 1 && isSunkOnMyBoard(r, c)) cell.classList.add('sunk');
+        if (G.myBoard[r][c] === 1 && isSunkOnMyBoard(r, c)) {
+          cell.classList.add('sunk');
+        }
       } else if (G.enemyShots[r][c] === 1) {
         cell.classList.add('miss');
       }
 
+      // Превью при расстановке
       if (preview && G.phase === 'placement' && G.currentShipIdx < G.shipQueue.length) {
         const { row, col, size, horizontal, valid } = preview;
-        let hit = false;
+        let inPreview = false;
         if (horizontal) {
-          if (r === row && c >= col && c < col + size) hit = true;
+          if (r === row && c >= col && c < col + size) inPreview = true;
         } else {
-          if (c === col && r >= row && r < row + size) hit = true;
+          if (c === col && r >= row && r < row + size) inPreview = true;
         }
-        if (hit) {
-          cell.style.background = valid
-            ? 'linear-gradient(135deg, #66bb6a, #388e3c)'
-            : 'linear-gradient(135deg, #ef5350, #c62828)';
+        if (inPreview && G.myBoard[r][c] !== 1) {
+          cell.classList.add(valid ? 'preview-valid' : 'preview-invalid');
         }
       }
 
@@ -1062,10 +1241,15 @@ function renderEnemyBoard() {
 
       const shot = G.myShots[r][c];
 
+      // Показываем рисунок корабля только на попаданиях и потопленных
       if (shot === 2) {
         cell.classList.add('hit');
-        if (G.enemyRevealed[r][c] === 1 && isSunkOnEnemy(r, c)) {
-          cell.classList.add('sunk');
+        if (G.enemyRevealed[r][c] === 1) {
+          const size = getShipSize(G.enemyRevealed, r, c);
+          const info = getShipRole(G.enemyRevealed, r, c);
+          cell.classList.add('ship');
+          cell.innerHTML = shipSVG(size, info.role, info.horizontal, `e-${r}-${c}`);
+          if (isSunkOnEnemy(r, c)) cell.classList.add('sunk');
         }
       } else if (shot === 1) {
         cell.classList.add('miss');
@@ -1102,12 +1286,10 @@ function getShipCells(board, r, c) {
   }
   return cells;
 }
-
 function isSunkOnMyBoard(r, c) {
   const cells = getShipCells(G.myBoard, r, c);
   return cells.every(([sr, sc]) => G.enemyShots[sr][sc] === 2);
 }
-
 function isSunkOnEnemy(r, c) {
   const cells = getShipCells(G.enemyRevealed, r, c);
   return cells.every(([sr, sc]) => G.myShots[sr][sc] === 2);
@@ -1117,11 +1299,8 @@ function isSunkOnEnemy(r, c) {
 // РАССТАНОВКА
 // ===================================================
 function canPlaceShip(r, c, size, horizontal) {
-  if (horizontal) {
-    if (c + size > BOARD_SIZE) return false;
-  } else {
-    if (r + size > BOARD_SIZE) return false;
-  }
+  if (horizontal) { if (c + size > BOARD_SIZE) return false; }
+  else            { if (r + size > BOARD_SIZE) return false; }
   for (let i = 0; i < size; i++) {
     const rr = horizontal ? r : r + i;
     const cc = horizontal ? c + i : c;
@@ -1140,12 +1319,9 @@ function canPlaceShip(r, c, size, horizontal) {
 function placeShipAt(r, c) {
   if (G.phase !== 'placement') return;
   if (G.currentShipIdx >= G.shipQueue.length) return;
-
   const size = G.shipQueue[G.currentShipIdx];
   const horizontal = G.horizontal;
-
   if (!canPlaceShip(r, c, size, horizontal)) return;
-
   for (let i = 0; i < size; i++) {
     const rr = horizontal ? r : r + i;
     const cc = horizontal ? c + i : c;
@@ -1153,7 +1329,6 @@ function placeShipAt(r, c) {
   }
   G.ships.push({ r, c, size, horizontal });
   G.currentShipIdx++;
-
   Sound.playClick();
   updatePlacementUI();
   renderMyBoard();
@@ -1179,7 +1354,6 @@ function randomPlacement() {
   G.myBoard = emptyBoard();
   G.ships = [];
   G.currentShipIdx = 0;
-
   for (const size of G.shipQueue) {
     let placed = false, attempts = 0;
     while (!placed && attempts < 1000) {
@@ -1230,17 +1404,13 @@ function confirmPlacement() {
     showNotification('⚠️ Расставьте все корабли!');
     return;
   }
-
   G.iAmReady = true;
   G.phase = 'waiting-enemy-ready';
   Sound.playReady();
   send({ type: 'ready' });
-
   $('placementControls').classList.add('hidden');
-
-  if (G.enemyReady) {
-    startBattlePhase();
-  } else {
+  if (G.enemyReady) startBattlePhase();
+  else {
     showOnly('waitScreen');
     $('waitScreenText').textContent = 'Соперник расставляет корабли...';
   }
@@ -1259,19 +1429,15 @@ function startBattlePhase() {
   G.phase = 'battle';
   G.waitingForResult = false;
   G.turn = (G.myPlayerNum === 1) ? 'my-turn' : 'enemy-turn';
-
   showOnly(null);
   $('gameContainer').classList.remove('hidden');
   $('placementControls').classList.add('hidden');
   $('battleControls').classList.remove('hidden');
-
   updateBattleUI();
   renderMyBoard();
   renderEnemyBoard();
-
   Sound.startMusic();
   Sound.playNotify();
-
   if (G.turn === 'my-turn') showNotification('🎯 Ваш ход первым!');
 }
 
@@ -1279,7 +1445,6 @@ function updateBattleUI() {
   statusPanel.className = 'status-panel';
   const enemyWrapper = $('enemyWrapper');
   enemyWrapper.classList.remove('active-attack');
-
   if (G.phase === 'battle') {
     if (G.turn === 'my-turn') {
       statusPanel.classList.add('turn-me');
@@ -1301,12 +1466,10 @@ function updateScore() {
   for (let r = 0; r < BOARD_SIZE; r++)
     for (let c = 0; c < BOARD_SIZE; c++)
       if (G.myBoard[r][c] === 1 && G.enemyShots[r][c] !== 2) myRem++;
-
   let enemyRem = TOTAL_SHIP_CELLS;
   for (let r = 0; r < BOARD_SIZE; r++)
     for (let c = 0; c < BOARD_SIZE; c++)
       if (G.myShots[r][c] === 2) enemyRem--;
-
   $('scoreYou').textContent = myRem;
   $('scoreEnemy').textContent = enemyRem;
 }
@@ -1319,12 +1482,9 @@ function shootAt(r, c) {
   if (G.turn !== 'my-turn') return;
   if (G.waitingForResult) return;
   if (G.myShots[r][c] !== 0) return;
-
   Sound.playShoot();
-
   G.waitingForResult = true;
   send({ type: 'shot', row: r, col: c });
-
   statusPanel.className = 'status-panel turn-wait';
   statusText.textContent = '🎯 Выстрел...';
   renderEnemyBoard();
@@ -1336,10 +1496,7 @@ function shootAt(r, c) {
 function handleEnemyShot(r, c) {
   if (G.phase !== 'battle') return;
   if (G.enemyShots[r][c] !== 0) {
-    send({
-      type: 'shotResult', row: r, col: c,
-      hit: G.myBoard[r][c] === 1, sunk: false, win: false
-    });
+    send({ type: 'shotResult', row: r, col: c, hit: G.myBoard[r][c] === 1, sunk: false, win: false });
     return;
   }
 
@@ -1350,46 +1507,28 @@ function handleEnemyShot(r, c) {
     G.enemyShots[r][c] = 2;
     const sunk = isSunkOnMyBoard(r, c);
     if (sunk) setTimeout(() => Sound.playSunk(), 200);
-
     let allSunk = true;
     outer:
     for (let rr = 0; rr < BOARD_SIZE; rr++) {
       for (let cc = 0; cc < BOARD_SIZE; cc++) {
-        if (G.myBoard[rr][cc] === 1 && G.enemyShots[rr][cc] !== 2) {
-          allSunk = false;
-          break outer;
-        }
+        if (G.myBoard[rr][cc] === 1 && G.enemyShots[rr][cc] !== 2) { allSunk = false; break outer; }
       }
     }
-
-    send({
-      type: 'shotResult', row: r, col: c,
-      hit: true, sunk: sunk, win: allSunk
-    });
-
+    send({ type: 'shotResult', row: r, col: c, hit: true, sunk: sunk, win: allSunk });
     renderMyBoard();
     updateScore();
-
     if (allSunk) {
-      G.phase = 'gameover';
-      G.turn = 'waiting';
+      G.phase = 'gameover'; G.turn = 'waiting';
       setTimeout(() => showWinScreen(false), 800);
       return;
     }
-
     G.turn = 'enemy-turn';
     updateBattleUI();
-
   } else {
     Sound.playMiss();
     G.enemyShots[r][c] = 1;
-    send({
-      type: 'shotResult', row: r, col: c,
-      hit: false, sunk: false, win: false
-    });
-
+    send({ type: 'shotResult', row: r, col: c, hit: false, sunk: false, win: false });
     renderMyBoard();
-
     G.turn = 'my-turn';
     G.waitingForResult = false;
     updateBattleUI();
@@ -1408,22 +1547,18 @@ function handleShotResult(r, c, hit, sunk, win) {
     Sound.playHit();
     G.myShots[r][c] = 2;
     G.enemyRevealed[r][c] = 1;
-
     if (sunk) {
       revealSunkShip(r, c);
       setTimeout(() => Sound.playSunk(), 250);
       showNotification('🔥 КОРАБЛЬ ПОТОПЛЕН!');
     }
-
     if (win) {
-      G.phase = 'gameover';
-      G.turn = 'waiting';
+      G.phase = 'gameover'; G.turn = 'waiting';
       renderEnemyBoard();
       updateScore();
       setTimeout(() => showWinScreen(true), 800);
       return;
     }
-
     G.turn = 'my-turn';
   } else {
     Sound.playMiss();
@@ -1440,7 +1575,6 @@ function revealSunkShip(r, c) {
   const visited = new Set();
   const stack = [[r, c]];
   const found = [];
-
   while (stack.length) {
     const [cr, cc] = stack.pop();
     const key = cr + ',' + cc;
@@ -1451,7 +1585,6 @@ function revealSunkShip(r, c) {
     found.push([cr, cc]);
     stack.push([cr+1, cc], [cr-1, cc], [cr, cc+1], [cr, cc-1]);
   }
-
   found.forEach(([rr, cc]) => { G.enemyRevealed[rr][cc] = 1; });
 }
 
@@ -1468,15 +1601,8 @@ function leaveGame() {
 function showWinScreen(iWon) {
   G.phase = 'gameover';
   Sound.stopMusic();
-
-  if (iWon) {
-    Sound.playVictory();
-  } else {
-    Sound.playDefeat();
-  }
-
+  if (iWon) Sound.playVictory(); else Sound.playDefeat();
   showOnly('winScreen');
-
   if (iWon) {
     $('winTitle').textContent = '🏆 ВЫ ПОБЕДИЛИ!';
     $('winText').textContent = 'Флот противника уничтожен!';
@@ -1498,21 +1624,10 @@ function copyLink() {
   const el = $('linkInput');
   el.select();
   el.setSelectionRange(0, 99999);
-
-  const done = () => {
-    showNotification('✅ Ссылка скопирована!');
-    Sound.playNotify();
-  };
-
+  const done = () => { showNotification('✅ Ссылка скопирована!'); Sound.playNotify(); };
   if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(el.value).then(done).catch(() => {
-      document.execCommand('copy');
-      done();
-    });
-  } else {
-    document.execCommand('copy');
-    done();
-  }
+    navigator.clipboard.writeText(el.value).then(done).catch(() => { document.execCommand('copy'); done(); });
+  } else { document.execCommand('copy'); done(); }
 }
 
 // ===================================================
@@ -1520,13 +1635,11 @@ function copyLink() {
 // ===================================================
 document.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
-  if ((k === 'r' || k === 'к') && G.phase === 'placement') {
-    rotateShip();
-  }
+  if ((k === 'r' || k === 'к') && G.phase === 'placement') rotateShip();
 });
 
 // ===================================================
-// АВТОЗАПУСК ПРИ ?room=
+// АВТОЗАПУСК
 // ===================================================
 window.addEventListener('load', () => {
   const url = new URLSearchParams(window.location.search);
