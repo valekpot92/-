@@ -48,7 +48,6 @@
     background: linear-gradient(135deg, #142842 0%, #4a3d6b 50%, #8a6a7a 100%);
   }
 
-  /* Индикатор времени суток — маленькая иконка в углу */
   .time-indicator {
     position: fixed;
     top: calc(10px + env(safe-area-inset-top));
@@ -82,7 +81,6 @@
     position: absolute; background: #fff; border-radius: 50%;
     opacity: 0.6; animation: twinkle 3s infinite;
   }
-  /* Днём звёзды видны хуже */
   body.time-day .star { opacity: 0.25; }
   body.time-sunset .star { opacity: 0.5; }
   body.time-dawn .star { opacity: 0.4; }
@@ -269,7 +267,6 @@
     0%,100% { box-shadow: 0 0 40px rgba(255,213,79,0.6); }
     50% { box-shadow: 0 0 60px rgba(255,213,79,1); }
   }
-  /* ПУНКТ 18: тряска экрана при победе */
   .board-wrapper.shake {
     animation: board-shake 0.5s ease-in-out;
   }
@@ -280,7 +277,6 @@
     60% { transform: translate(-3px, -2px) rotate(-0.3deg); }
     80% { transform: translate(3px, 2px) rotate(0.3deg); }
   }
-  /* ПУНКТ 19: слоу-мо — вся игра замедляется */
   body.slowmo {
     filter: saturate(1.4) contrast(1.1);
   }
@@ -340,6 +336,7 @@
     background: rgba(10,30,50,0.3);
     padding: 0;
     z-index: 2;
+    overflow: visible;
   }
 
   .ship-canvas {
@@ -353,51 +350,97 @@
     transition: transform 0.4s ease, opacity 0.4s ease;
   }
 
-  /* ПУНКТ 16: затонувший корабль уходит под воду */
+  /* ============================================================
+     НОВАЯ АНИМАЦИЯ ЗАТОПЛЕНИЯ КОРАБЛЯ
+     ============================================================
+     Когда корабль потоплен, вся его группа клеток одновременно
+     "уходит под воду": сдвигается вниз, наклоняется, уменьшается
+     и темнеет. Плюс появляются пузыри и волны вокруг.
+  ============================================================ */
   .cell.sunk {
-    background: linear-gradient(135deg, #4a0000, #1a0000) !important;
-    box-shadow: inset 0 0 20px #ff0000;
-    overflow: hidden;
+    background: linear-gradient(135deg, #1a2a3a, #0a1520) !important;
+    box-shadow: inset 0 0 25px rgba(0,0,0,0.9);
+    overflow: visible;
+    z-index: 1;
   }
   .cell.sunk .ship-canvas {
-    filter: brightness(0.15) contrast(1.8) drop-shadow(0 0 4px #ff0000);
-    animation: sink-away 3s ease-out forwards;
-    transform-origin: center;
+    animation: ship-sink 2.4s ease-in forwards;
+    transform-origin: center bottom;
   }
-  @keyframes sink-away {
-    0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-    60% { transform: translateY(8px) rotate(3deg) scale(0.95); opacity: 0.7; }
-    100% { transform: translateY(25px) rotate(8deg) scale(0.75); opacity: 0.4; }
+  @keyframes ship-sink {
+    0% { transform: translateY(0) rotate(0deg) scale(1); filter: brightness(1) drop-shadow(0 2px 3px rgba(0,0,0,0.55)); opacity: 1; }
+    25% { transform: translateY(4px) rotate(-2deg) scale(0.98); filter: brightness(0.7) sepia(0.5) hue-rotate(-20deg) drop-shadow(0 0 8px #ff4400); opacity: 1; }
+    60% { transform: translateY(15px) rotate(6deg) scale(0.88); filter: brightness(0.35) contrast(1.5) drop-shadow(0 0 6px #ff2200); opacity: 0.75; }
+    100% { transform: translateY(35px) rotate(12deg) scale(0.7); filter: brightness(0.1) contrast(2) drop-shadow(0 0 3px #330000); opacity: 0.4; }
   }
-  /* Пузыри при затоплении */
+
+  /* Кольцо воды вокруг тонущего корабля */
   .cell.sunk::before {
     content: '';
     position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(circle at 30% 40%, rgba(200,230,255,0.6) 0%, transparent 8%),
-      radial-gradient(circle at 60% 70%, rgba(200,230,255,0.4) 0%, transparent 6%),
-      radial-gradient(circle at 45% 20%, rgba(200,230,255,0.5) 0%, transparent 5%);
-    animation: bubbles-rise 3s ease-out infinite;
+    top: 50%; left: 50%;
+    width: 60%; height: 60%;
+    border: 2px solid rgba(120,200,255,0.6);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
     pointer-events: none;
     z-index: 5;
+    animation: sunk-ring 2.4s ease-out forwards;
   }
-  @keyframes bubbles-rise {
-    0% { transform: translateY(0) scale(0.5); opacity: 0; }
-    30% { opacity: 1; }
-    100% { transform: translateY(-30px) scale(1.2); opacity: 0; }
-  }
-  .cell.sunk::after {
-    content: '🔥';
-    position: absolute; z-index: 4; font-size: 1em;
-    animation: fire-flicker 1s ease-in-out infinite;
-  }
-  @keyframes fire-flicker {
-    0%,100% { opacity: 0.7; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.15); }
+  @keyframes sunk-ring {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(3.5); opacity: 0; }
   }
 
-  /* ПУНКТ 15: реалистичная вода при промахе */
+  /* Пузыри поднимаются из тонущего корабля */
+  .cell.sunk::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 6;
+    background:
+      radial-gradient(circle at 30% 70%, rgba(180,220,255,0.9) 0%, transparent 4%),
+      radial-gradient(circle at 65% 80%, rgba(180,220,255,0.7) 0%, transparent 3%),
+      radial-gradient(circle at 45% 60%, rgba(180,220,255,0.8) 0%, transparent 5%),
+      radial-gradient(circle at 20% 50%, rgba(180,220,255,0.6) 0%, transparent 3%),
+      radial-gradient(circle at 75% 55%, rgba(180,220,255,0.7) 0%, transparent 4%);
+    animation: bubbles-up 2.4s ease-out forwards;
+    opacity: 0;
+  }
+  @keyframes bubbles-up {
+    0% { opacity: 0; transform: translateY(0); }
+    15% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-25px); }
+  }
+
+  /* Горящий обломок, оставшийся на месте корабля (мерцающий огонёк) */
+  .sunk-flame {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 6px; height: 12px;
+    background: radial-gradient(ellipse at bottom, #ff4400 0%, #ffaa00 40%, transparent 70%);
+    border-radius: 50% 50% 20% 20%;
+    transform: translate(-50%, -60%);
+    z-index: 7;
+    pointer-events: none;
+    animation: flame-flicker 0.4s ease-in-out infinite alternate, flame-shrink 2.4s ease-out forwards;
+    filter: blur(0.5px) drop-shadow(0 0 6px #ff4400);
+  }
+  @keyframes flame-flicker {
+    0% { transform: translate(-50%, -60%) scale(1) rotate(-3deg); opacity: 1; }
+    100% { transform: translate(-50%, -65%) scale(1.15) rotate(3deg); opacity: 0.8; }
+  }
+  @keyframes flame-shrink {
+    0% { opacity: 0; transform: translate(-50%, -60%) scale(0); }
+    20% { opacity: 1; transform: translate(-50%, -60%) scale(1.2); }
+    100% { opacity: 0.5; transform: translate(-50%, -60%) scale(0.7); }
+  }
+
+  /* ============================================================
+     ПУНКТ 15: РЕАЛИСТИЧНАЯ ВОДА ПРИ ПРОМАХЕ
+     ============================================================ */
   .cell.miss {
     background: linear-gradient(135deg, #0d2842 0%, #081a2c 100%);
     overflow: hidden;
@@ -444,7 +487,9 @@
     100% { transform: scale(0.5) translateY(15px); opacity: 0; }
   }
 
-  /* ПУНКТ 14: анимированное попадание — взрыв + дым + волна */
+  /* ============================================================
+     ПУНКТ 14: АНИМИРОВАННОЕ ПОПАДАНИЕ (без дыма)
+     ============================================================ */
   .cell.hit {
     background: linear-gradient(135deg, #ff4444, #cc0000) !important;
     z-index: 3;
@@ -460,7 +505,6 @@
     pointer-events: none;
     text-shadow: 0 0 12px #ff4400;
   }
-  /* Вспышка */
   .cell.hit::after {
     content: '';
     position: absolute;
@@ -481,24 +525,7 @@
     100% { opacity: 0; transform: scale(1.5); }
   }
 
-  /* Дым от попадания — плавающий над клеткой */
-  .smoke-puff {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 6;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(80,80,80,0.7) 0%, rgba(50,50,50,0.4) 40%, transparent 70%);
-    animation: smoke-up 2s ease-out forwards;
-  }
-  @keyframes smoke-up {
-    0% { transform: translateY(0) scale(0.3); opacity: 0; }
-    20% { opacity: 0.8; }
-    100% { transform: translateY(-60px) scale(2.5); opacity: 0; }
-  }
-
-  /* Волна расходится от взрыва */
+  /* Ударная волна */
   .shockwave {
     position: absolute;
     top: 50%; left: 50%;
@@ -684,7 +711,6 @@
     100% { opacity: 0; transform: scale(2); }
   }
 
-  /* Молнии при победе */
   .lightning {
     position: fixed;
     top: 0;
@@ -746,7 +772,6 @@
   /* ================================================================
      МОБИЛЬНАЯ АДАПТАЦИЯ
      ================================================================ */
-
   .rules-toggle {
     display: none;
     margin-top: 10px;
@@ -760,130 +785,50 @@
       padding-top: calc(10px + env(safe-area-inset-top));
       padding-bottom: calc(10px + env(safe-area-inset-bottom));
     }
-
-    h1 {
-      font-size: 1.6em;
-      letter-spacing: 2px;
-      margin-bottom: 10px;
-    }
-
-    .time-indicator {
-      font-size: 1.3em;
-      top: calc(5px + env(safe-area-inset-top));
-      left: calc(5px + env(safe-area-inset-left));
-    }
-
+    h1 { font-size: 1.6em; letter-spacing: 2px; margin-bottom: 10px; }
+    .time-indicator { font-size: 1.3em; top: calc(5px + env(safe-area-inset-top)); left: calc(5px + env(safe-area-inset-left)); }
     .timer-container { gap: 12px; margin-bottom: 10px; }
     .timer-box { width: 90px; height: 90px; }
     .timer-value { font-size: 2em; }
     .timer-label { font-size: 0.6em; }
     .timer-status { padding: 8px 14px; font-size: 0.85em; }
-
-    .status-panel {
-      padding: 10px 16px;
-      font-size: 0.95em;
-      min-height: 46px;
-      margin-bottom: 10px;
-    }
-
+    .status-panel { padding: 10px 16px; font-size: 0.95em; min-height: 46px; margin-bottom: 10px; }
     .score-panel { gap: 8px; margin-bottom: 10px; }
-    .score-card {
-      padding: 8px 14px;
-      min-width: 120px;
-      flex: 1;
-      max-width: 170px;
-    }
+    .score-card { padding: 8px 14px; min-width: 120px; flex: 1; max-width: 170px; }
     .score-card .label { font-size: 0.8em; }
     .score-card .value { font-size: 1.4em; }
-
-    .game-area {
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    body.is-mobile .board-wrapper.hidden-mobile {
-      display: none !important;
-    }
-
-    .board-wrapper {
-      padding: 12px;
-      width: 100%;
-      max-width: 440px;
-    }
+    .game-area { flex-direction: column; align-items: center; gap: 12px; margin-bottom: 12px; }
+    body.is-mobile .board-wrapper.hidden-mobile { display: none !important; }
+    .board-wrapper { padding: 12px; width: 100%; max-width: 440px; }
     .board-title { font-size: 1.1em; margin-bottom: 8px; }
-
-    .board {
-      width: 100%;
-      max-width: 400px;
-      aspect-ratio: 1 / 1;
-      height: auto;
-      gap: 1px;
-      padding: 4px;
-      margin: 0 auto;
-    }
-
+    .board { width: 100%; max-width: 400px; aspect-ratio: 1 / 1; height: auto; gap: 1px; padding: 4px; margin: 0 auto; }
     .cell { font-size: 1em; }
-
     .cell.clickable:hover {
       background: linear-gradient(135deg, rgba(30,77,107,0.85) 0%, rgba(22,58,82,0.9) 100%);
-      transform: none;
-      box-shadow: none;
+      transform: none; box-shadow: none;
     }
     .cell.clickable:active {
       background: linear-gradient(135deg, rgba(255,213,79,0.9) 0%, rgba(255,179,0,0.9) 100%) !important;
       transform: scale(1.05);
     }
-
     .controls { gap: 8px; margin-top: 10px; }
-    button {
-      padding: 12px 16px;
-      font-size: 0.85em;
-      min-height: 48px;
-      flex: 1 1 calc(50% - 8px);
-      max-width: calc(50% - 4px);
-    }
-    #soundToggle {
-      padding: 10px 16px;
-      font-size: 0.85em;
-      min-height: 42px;
-      width: auto;
-      max-width: none;
-      flex: none;
-    }
-
-    .screen {
-      padding: 15px;
-      justify-content: flex-start;
-      padding-top: calc(20px + env(safe-area-inset-top));
-    }
+    button { padding: 12px 16px; font-size: 0.85em; min-height: 48px; flex: 1 1 calc(50% - 8px); max-width: calc(50% - 4px); }
+    #soundToggle { padding: 10px 16px; font-size: 0.85em; min-height: 42px; width: auto; max-width: none; flex: none; }
+    .screen { padding: 15px; justify-content: flex-start; padding-top: calc(20px + env(safe-area-inset-top)); }
     .screen h2 { font-size: 1.6em; margin-bottom: 12px; }
     .screen p { font-size: 0.95em; }
-
-    .rules {
-      padding: 15px;
-      margin: 12px 0;
-      max-width: 100%;
-      width: 100%;
-    }
+    .rules { padding: 15px; margin: 12px 0; max-width: 100%; width: 100%; }
     .rules h3 { font-size: 1em; margin-bottom: 8px; }
     .rules li { padding: 5px 0; font-size: 0.85em; }
-
     .menu-buttons { gap: 10px; width: 100%; max-width: 400px; }
     .menu-buttons button { flex: 1 1 100%; max-width: 100%; }
-
     .room-code-box { font-size: 1.6em; letter-spacing: 4px; padding: 12px 16px; }
-
     .copy-box { flex-direction: column; width: 100%; max-width: 400px; }
     .copy-box input { width: 100%; max-width: 100%; font-size: 0.7em; }
     .copy-box button { width: 100%; max-width: 100%; }
-
     .input-group { width: 100%; max-width: 400px; }
     input[type="text"] { width: 100%; font-size: 1em; }
-
     .notification { padding: 20px 28px; font-size: 1.3em; max-width: 90vw; }
-
     .rules-toggle { display: inline-block; }
   }
 
@@ -926,8 +871,7 @@
   @media (hover: none) and (pointer: coarse) {
     .cell.clickable:hover {
       background: linear-gradient(135deg, rgba(30,77,107,0.85) 0%, rgba(22,58,82,0.9) 100%);
-      transform: none;
-      box-shadow: none;
+      transform: none; box-shadow: none;
     }
     button:hover:not(:disabled) { transform: none; }
     button:active:not(:disabled) { transform: scale(0.96); }
@@ -943,9 +887,7 @@
 </head>
 <body>
 
-<!-- Индикатор времени суток -->
 <div class="time-indicator" id="timeIndicator">☀️</div>
-
 <div class="stars" id="stars"></div>
 
 <!-- ЭКРАН 1: Главное меню -->
@@ -976,19 +918,15 @@
 <div class="screen hidden" id="createScreen">
   <h2>🎮 Создание игры</h2>
   <p>Отправьте другу код комнаты или ссылку</p>
-
   <div class="room-code-box" id="roomCodeDisplay">...</div>
-
   <div class="copy-box">
     <input type="text" id="linkInput" readonly value="">
     <button onclick="copyLink()">📋 КОПИРОВАТЬ</button>
   </div>
-
   <div style="margin-top: 25px;">
     <div class="loader" id="waitingLoader"></div>
     <p style="margin-top: 10px; color: #4fc3f7;" id="waitingText">⏳ Ожидание подключения друга...</p>
   </div>
-
   <button class="danger" style="margin-top: 20px;" onclick="backToMenu()">← НАЗАД</button>
 </div>
 
@@ -996,15 +934,11 @@
 <div class="screen hidden" id="joinScreen">
   <h2>🔗 Подключение к игре</h2>
   <p>Введите код комнаты, который прислал друг</p>
-
   <div class="input-group">
     <input type="text" id="joinCodeInput" maxlength="6" placeholder="ABC123" inputmode="text" autocomplete="off">
   </div>
-
   <button onclick="joinGame()">🚀 ПОДКЛЮЧИТЬСЯ</button>
-
   <div id="joinError" style="color: #ff6b6b; margin-top: 15px; min-height: 24px;"></div>
-
   <button class="danger" style="margin-top: 20px;" onclick="backToMenu()">← НАЗАД</button>
 </div>
 
@@ -1112,7 +1046,6 @@ const DeviceInfo = (function() {
 document.body.classList.add(DeviceInfo.isMobile ? 'is-mobile' : 'is-desktop');
 if (DeviceInfo.isTouch) document.body.classList.add('is-touch');
 
-// Блокировка двойного тапа
 let lastTouchEnd = 0;
 document.addEventListener('touchend', (e) => {
   const now = Date.now();
@@ -1120,9 +1053,7 @@ document.addEventListener('touchend', (e) => {
   lastTouchEnd = now;
 }, { passive: false });
 
-document.addEventListener('contextmenu', (e) => {
-  if (DeviceInfo.isTouch) e.preventDefault();
-});
+document.addEventListener('contextmenu', (e) => { if (DeviceInfo.isTouch) e.preventDefault(); });
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('gesturechange', (e) => e.preventDefault());
 document.addEventListener('gestureend', (e) => e.preventDefault());
@@ -1150,13 +1081,11 @@ const TimeOfDay = {
   intervalId: null,
 
   apply(stateName) {
-    // Убираем все классы времени
     document.body.classList.remove('time-day', 'time-sunset', 'time-night', 'time-dawn');
     document.body.classList.add('time-' + stateName);
     const indicator = document.getElementById('timeIndicator');
     if (indicator) {
       indicator.textContent = this.icons[stateName];
-      // Перезапуск анимации
       indicator.style.animation = 'none';
       void indicator.offsetWidth;
       indicator.style.animation = 'time-fade 2s ease-in-out';
@@ -1170,9 +1099,7 @@ const TimeOfDay = {
   },
 
   start() {
-    // Сразу ставим день
     this.apply('day');
-    // Каждые 5 минут меняем
     this.intervalId = setInterval(() => this.next(), 5 * 60 * 1000);
   },
 
@@ -1184,16 +1111,12 @@ const TimeOfDay = {
 // ===================================================
 // ПУНКТ 18: ЭПИЧНЫЕ ЭФФЕКТЫ ПОБЕДЫ
 // ===================================================
-
-// Вспышка на весь экран
 function epicFlash() {
   const flash = document.createElement('div');
   flash.className = 'win-epic-flash';
   document.body.appendChild(flash);
   setTimeout(() => flash.remove(), 1600);
 }
-
-// Молнии в случайных местах
 function lightningStrike() {
   const count = 3 + Math.floor(Math.random() * 3);
   for (let i = 0; i < count; i++) {
@@ -1207,8 +1130,6 @@ function lightningStrike() {
     }, i * 200 + Math.random() * 300);
   }
 }
-
-// Тряска обоих полей
 function shakeBoards() {
   [myWrapperEl, enemyWrapperEl].forEach(w => {
     w.classList.remove('shake');
@@ -1217,13 +1138,10 @@ function shakeBoards() {
     setTimeout(() => w.classList.remove('shake'), 600);
   });
 }
-
-// Эпичный финальный экран
 function playEpicWin() {
   epicFlash();
   lightningStrike();
   shakeBoards();
-  // Тряска всего экрана
   document.body.style.animation = 'none';
   void document.body.offsetWidth;
   document.body.style.animation = 'board-shake 0.6s ease-in-out';
@@ -1231,15 +1149,10 @@ function playEpicWin() {
 }
 
 // ===================================================
-// ПУНКТ 14: АНИМИРОВАННОЕ ПОПАДАНИЕ
+// ПУНКТ 14: АНИМИРОВАННОЕ ПОПАДАНИЕ (без дыма)
 // ===================================================
 function playHitAnimation(cellEl, row, col) {
   if (!cellEl) return;
-  // Дым
-  const smoke = document.createElement('div');
-  smoke.className = 'smoke-puff';
-  cellEl.appendChild(smoke);
-  setTimeout(() => smoke.remove(), 2000);
 
   // Ударная волна
   const wave = document.createElement('div');
@@ -1267,8 +1180,6 @@ function playHitAnimation(cellEl, row, col) {
 // ===================================================
 function playMissAnimation(cellEl) {
   if (!cellEl) return;
-  // Уже есть через CSS ::before и ::after (ripple)
-  // Добавляем ещё каплю с эффектом
   const drop = document.createElement('div');
   drop.className = 'drop-icon';
   drop.textContent = '💧';
@@ -1277,17 +1188,38 @@ function playMissAnimation(cellEl) {
 }
 
 // ===================================================
-// ПУНКТ 19: СЛОУ-МО ПРИ ПОСЛЕДНЕМ ПОПАДАНИИ
+// НОВАЯ АНИМАЦИЯ ЗАТОПЛЕНИЯ ВСЕГО КОРАБЛЯ
 // ===================================================
-function enterSlowmo() {
-  document.body.classList.add('slowmo');
-  console.log('[Slowmo] ON');
+function playShipSinkAnimation(shipCells, boardEl) {
+  if (!shipCells || shipCells.length === 0 || !boardEl) return;
+
+  // Находим средний центр корабля на доске, чтобы понять куда добавить "волну" вокруг
+  // Добавляем каждому сегменту маленький огонёк в центре — символ того, что корабль горит под водой
+  shipCells.forEach(([r, c]) => {
+    const cellEl = getCellEl(boardEl, r, c);
+    if (!cellEl) return;
+    // Добавляем мерцающий огонёк
+    const flame = document.createElement('div');
+    flame.className = 'sunk-flame';
+    cellEl.appendChild(flame);
+    // Через 3 секунды убираем — под водой уже ничего не видно
+    setTimeout(() => flame.remove(), 3000);
+  });
+
+  // Тряска доски — как будто корабль уходит под воду
+  boardEl.style.animation = 'none';
+  void boardEl.offsetWidth;
+  boardEl.style.animation = 'board-shake 0.6s ease-in-out';
+  setTimeout(() => { boardEl.style.animation = ''; }, 700);
+
+  console.log('[Sink] Корабль уходит под воду:', shipCells.length, 'палуб');
 }
-function exitSlowmo() {
-  document.body.classList.remove('slowmo');
-  console.log('[Slowmo] OFF');
-}
-// Слоу-мо на 1.5 секунды
+
+// ===================================================
+// ПУНКТ 19: СЛОУ-МО
+// ===================================================
+function enterSlowmo() { document.body.classList.add('slowmo'); }
+function exitSlowmo() { document.body.classList.remove('slowmo'); }
 function triggerSlowmo(duration = 1500) {
   enterSlowmo();
   setTimeout(exitSlowmo, duration);
@@ -1324,7 +1256,6 @@ const TurnTimer = {
     this.active = true;
     this.onExpire = onExpire;
     this.render();
-
     this.intervalId = setInterval(() => {
       if (!this.active) return;
       this.secondsLeft--;
@@ -1359,12 +1290,10 @@ const TurnTimer = {
     const valueEl = document.getElementById('timerValue');
     const progressEl = document.getElementById('timerProgress');
     const boxEl = document.getElementById('timerBox');
-
     valueEl.textContent = this.secondsLeft;
     const ratio = this.secondsLeft / TURN_TIME;
     const offset = TIMER_CIRCUMFERENCE * (1 - ratio);
     progressEl.style.strokeDashoffset = offset;
-
     boxEl.classList.remove('warning', 'danger');
     if (this.secondsLeft <= 10 && this.secondsLeft > 0) {
       boxEl.classList.add('danger');
@@ -1377,10 +1306,8 @@ const TurnTimer = {
     const boxEl = document.getElementById('timerBox');
     const statusEl = document.getElementById('timerStatus');
     const statusTextEl = document.getElementById('timerStatusText');
-
     boxEl.classList.remove('my-turn', 'enemy-turn');
     statusEl.classList.remove('my-turn', 'enemy-turn', 'waiting');
-
     if (status === 'my') {
       boxEl.classList.add('my-turn');
       statusEl.classList.add('my-turn');
@@ -1400,17 +1327,10 @@ const TurnTimer = {
 // ЗВУК
 // ===================================================
 const Sound = {
-  ctx: null,
-  enabled: true,
-  masterGain: null,
-  musicGain: null,
-  musicPlaying: false,
+  ctx: null, enabled: true, masterGain: null, musicGain: null, musicPlaying: false,
 
   init() {
-    if (this.ctx) {
-      if (this.ctx.state === 'suspended') this.ctx.resume();
-      return;
-    }
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
     try {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
       this.masterGain = this.ctx.createGain();
@@ -1551,7 +1471,6 @@ const Sound = {
     this.noise(0.4, 0.2, 500, 0.1, 'lowpass', 1.2);
   },
 
-  // Триумфальная мелодия при победе
   playVictory() {
     this.init();
     const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
@@ -1559,7 +1478,6 @@ const Sound = {
     this.tone(1046.5, 1.2, 'sine', 0.3, 0.8);
     this.tone(1318.5, 1.2, 'sine', 0.25, 0.8);
     this.tone(1567.98, 1.2, 'sine', 0.2, 0.8);
-    // Громовой удар
     this.noise(1.5, 0.4, 400, 1.0, 'lowpass', 1.5);
     this.tone(40, 2.0, 'sine', 0.4, 1.0);
   },
@@ -1633,26 +1551,11 @@ document.addEventListener('click', () => Sound.init(), { once: true });
 // СОСТОЯНИЕ
 // ===================================================
 const G = {
-  myPlayerNum: null,
-  peer: null,
-  conn: null,
-  isHost: false,
-  roomCode: '',
-  connected: false,
-  phase: 'placement',
-  turn: 'waiting',
-  myBoard: null,
-  myShots: null,
-  enemyShots: null,
-  enemyRevealed: null,
-  enemyBlocked: null,
-  ships: [],
-  shipQueue: [],
-  currentShipIdx: 0,
-  horizontal: true,
-  iAmReady: false,
-  enemyReady: false,
-  waitingForResult: false
+  myPlayerNum: null, peer: null, conn: null, isHost: false, roomCode: '', connected: false,
+  phase: 'placement', turn: 'waiting',
+  myBoard: null, myShots: null, enemyShots: null, enemyRevealed: null, enemyBlocked: null,
+  ships: [], shipQueue: [], currentShipIdx: 0, horizontal: true,
+  iAmReady: false, enemyReady: false, waitingForResult: false
 };
 
 function emptyBoard() {
@@ -1693,7 +1596,6 @@ function updateMobileBoardVisibility() {
     enemyWrapperEl.classList.remove('hidden-mobile');
     return;
   }
-
   const showEnemy = (G.phase === 'battle' && G.turn === 'my-turn');
   if (showEnemy) {
     enemyWrapperEl.classList.remove('hidden-mobile');
@@ -1833,7 +1735,7 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
     ctx.strokeStyle = p.line;
     ctx.lineWidth = 2;
     ctx.stroke();
-    // ПУНКТ 20 (бонус): маленький флаг на носу
+    // Флаг на носу
     ctx.beginPath();
     ctx.moveTo(cx - 25, cy - 15);
     ctx.lineTo(cx - 25, cy - 3);
@@ -1871,7 +1773,7 @@ function drawShipOnCanvas(canvas, size, role, horizontal, isSunk, isHit) {
   ctx.restore();
 
   if (isSunk) {
-    canvas.style.filter = 'brightness(0.2) contrast(1.8) drop-shadow(0 0 4px #ff0000)';
+    canvas.style.filter = 'brightness(0.25) contrast(1.8) drop-shadow(0 0 5px #ff2200)';
   } else if (isHit) {
     canvas.style.filter = 'brightness(0.45) saturate(2) drop-shadow(0 0 6px #ff6600)';
   } else {
@@ -2066,7 +1968,6 @@ function renderEnemyBoard() {
   }
 }
 
-// Получить DOM-элемент клетки
 function getCellEl(boardEl, r, c) {
   const idx = r * BOARD_SIZE + c;
   return boardEl.children[idx];
@@ -2135,12 +2036,10 @@ function createRoom() {
   const peerId = 'seabattle-' + roomCode;
   G.peer = new Peer(peerId, {
     debug: 1,
-    config: {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:global.stun.twilio.com:3478' }
-      ]
-    }
+    config: { iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' }
+    ]}
   });
 
   G.peer.on('open', () => {
@@ -2177,12 +2076,10 @@ function joinGame() {
 
   G.peer = new Peer({
     debug: 1,
-    config: {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:global.stun.twilio.com:3478' }
-      ]
-    }
+    config: { iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' }
+    ]}
   });
 
   let failed = false;
@@ -2236,26 +2133,12 @@ function send(data) {
 
 function handleMessage(msg) {
   switch (msg.type) {
-    case 'ready':
-      G.enemyReady = true;
-      checkBothReady();
-      break;
-    case 'shot':
-      handleEnemyShot(msg.row, msg.col);
-      break;
-    case 'shotResult':
-      handleShotResult(msg.row, msg.col, msg.hit, msg.sunk, msg.win);
-      break;
-    case 'timeout':
-      handleEnemyTimeout();
-      break;
-    case 'surrender':
-      showNotification('🏆 Соперник сдался!');
-      showWinScreen(true);
-      break;
-    case 'restart':
-      location.reload();
-      break;
+    case 'ready': G.enemyReady = true; checkBothReady(); break;
+    case 'shot': handleEnemyShot(msg.row, msg.col); break;
+    case 'shotResult': handleShotResult(msg.row, msg.col, msg.hit, msg.sunk, msg.win); break;
+    case 'timeout': handleEnemyTimeout(); break;
+    case 'surrender': showNotification('🏆 Соперник сдался!'); showWinScreen(true); break;
+    case 'restart': location.reload(); break;
   }
 }
 
@@ -2289,7 +2172,6 @@ function startGame() {
   updatePlacementUI();
   updateMobileBoardVisibility();
   Sound.playNotify();
-
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -2325,10 +2207,7 @@ function placeShipAt(r, c) {
   if (G.currentShipIdx >= G.shipQueue.length) return;
   const size = G.shipQueue[G.currentShipIdx];
   const horizontal = G.horizontal;
-  if (!canPlaceShip(r, c, size, horizontal)) {
-    vibrate([30, 30, 30]);
-    return;
-  }
+  if (!canPlaceShip(r, c, size, horizontal)) { vibrate([30, 30, 30]); return; }
   for (let i = 0; i < size; i++) {
     const rr = horizontal ? r : r + i;
     const cc = horizontal ? c + i : c;
@@ -2411,10 +2290,7 @@ function updatePlacementUI() {
 
 function confirmPlacement() {
   if (G.phase !== 'placement') return;
-  if (G.currentShipIdx < G.shipQueue.length) {
-    showNotification('⚠️ Расставьте все корабли!');
-    return;
-  }
+  if (G.currentShipIdx < G.shipQueue.length) { showNotification('⚠️ Расставьте все корабли!'); return; }
   G.iAmReady = true;
   G.phase = 'waiting-enemy-ready';
   Sound.playReady();
@@ -2429,9 +2305,7 @@ function confirmPlacement() {
 }
 
 function checkBothReady() {
-  if (G.iAmReady && G.enemyReady && G.phase === 'waiting-enemy-ready') {
-    startBattlePhase();
-  }
+  if (G.iAmReady && G.enemyReady && G.phase === 'waiting-enemy-ready') startBattlePhase();
 }
 
 // ===================================================
@@ -2452,13 +2326,8 @@ function startBattlePhase() {
   Sound.startMusic();
   Sound.playNotify();
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (G.turn === 'my-turn') {
-    showNotification('🎯 Ваш ход первым!');
-    startMyTurnTimer();
-  } else {
-    TurnTimer.reset();
-    TurnTimer.setStatus('enemy');
-  }
+  if (G.turn === 'my-turn') { showNotification('🎯 Ваш ход первым!'); startMyTurnTimer(); }
+  else { TurnTimer.reset(); TurnTimer.setStatus('enemy'); }
 }
 
 function startMyTurnTimer() {
@@ -2551,10 +2420,8 @@ function handleEnemyShot(r, c) {
   const hit = G.myBoard[r][c] === 1;
 
   if (hit) {
-    // Определяем, последний ли это корабль (для слоу-мо)
-    let willBeWin = false;
-    // Временно помечаем
     G.enemyShots[r][c] = 2;
+
     let allSunk = true;
     outer:
     for (let rr = 0; rr < BOARD_SIZE; rr++) {
@@ -2562,25 +2429,25 @@ function handleEnemyShot(r, c) {
         if (G.myBoard[rr][cc] === 1 && G.enemyShots[rr][cc] !== 2) { allSunk = false; break outer; }
       }
     }
-    if (allSunk) willBeWin = true;
-
-    // ПУНКТ 19: Слоу-мо перед последним попаданием
-    if (willBeWin) {
-      triggerSlowmo(2000);
-    }
+    if (allSunk) triggerSlowmo(2000);
 
     Sound.playHit();
     vibrate([60, 30, 60]);
 
-    // ПУНКТ 14: Анимация попадания на моём поле
     const cellEl = getCellEl(myBoardEl, r, c);
     if (cellEl) playHitAnimation(cellEl, r, c);
 
     const sunk = isSunkOnMyBoard(r, c);
-    if (sunk) setTimeout(() => {
-      Sound.playSunk();
-      vibrate([100, 50, 100, 50, 200]);
-    }, 200);
+    if (sunk) {
+      setTimeout(() => {
+        Sound.playSunk();
+        vibrate([100, 50, 100, 50, 200]);
+        // НОВАЯ АНИМАЦИЯ: весь корабль тонет
+        const cells = getShipCells(G.myBoard, r, c);
+        renderMyBoard(); // перерисовка чтобы получить класс sunk на всех клетках
+        setTimeout(() => playShipSinkAnimation(cells, myBoardEl), 30);
+      }, 200);
+    }
 
     send({ type: 'shotResult', row: r, col: c, hit: true, sunk: sunk, win: allSunk });
 
@@ -2601,11 +2468,8 @@ function handleEnemyShot(r, c) {
     Sound.playMiss();
     vibrate(20);
     G.enemyShots[r][c] = 1;
-
-    // ПУНКТ 15: Анимация промаха на моём поле
     const cellEl = getCellEl(myBoardEl, r, c);
     if (cellEl) playMissAnimation(cellEl);
-
     send({ type: 'shotResult', row: r, col: c, hit: false, sunk: false, win: false });
     renderMyBoard();
     G.turn = 'my-turn';
@@ -2621,17 +2485,13 @@ function handleShotResult(r, c, hit, sunk, win) {
   G.waitingForResult = false;
 
   if (hit) {
-    // ПУНКТ 19: Слоу-мо, если это победный выстрел
-    if (win) {
-      triggerSlowmo(2000);
-    }
+    if (win) triggerSlowmo(2000);
 
     Sound.playHit();
     vibrate([60, 30, 60]);
     G.myShots[r][c] = 2;
     G.enemyRevealed[r][c] = 1;
 
-    // ПУНКТ 14: Анимация попадания на вражеском поле
     const cellEl = getCellEl(enemyBoardEl, r, c);
     if (cellEl) playHitAnimation(cellEl, r, c);
 
@@ -2639,19 +2499,20 @@ function handleShotResult(r, c, hit, sunk, win) {
       revealSunkShip(r, c);
       const cells = getShipCells(G.enemyRevealed, r, c);
       blockAroundSunkShip(cells);
+
       setTimeout(() => {
         Sound.playSunk();
         vibrate([100, 50, 100, 50, 200]);
+        // НОВАЯ АНИМАЦИЯ: весь корабль тонет
+        renderEnemyBoard(); // перерисовка чтобы получить класс sunk на всех клетках
+        setTimeout(() => playShipSinkAnimation(cells, enemyBoardEl), 30);
       }, 250);
       showNotification('🔥 КОРАБЛЬ ПОТОПЛЕН!');
     }
     if (win) {
       G.phase = 'gameover'; G.turn = 'waiting';
       TurnTimer.stop();
-      setTimeout(() => {
-        renderEnemyBoard();
-        updateScore();
-      }, 600);
+      setTimeout(() => { renderEnemyBoard(); updateScore(); }, 600);
       setTimeout(() => showWinScreen(true), 1400);
       return;
     }
@@ -2661,7 +2522,6 @@ function handleShotResult(r, c, hit, sunk, win) {
       renderEnemyBoard();
       renderMyBoard();
     }, 600);
-    // Таймер перезапустим чуть позже, чтобы анимация успела
     setTimeout(() => startMyTurnTimer(), 900);
     return;
   } else {
@@ -2672,7 +2532,6 @@ function handleShotResult(r, c, hit, sunk, win) {
     TurnTimer.reset();
     TurnTimer.setStatus('enemy');
 
-    // ПУНКТ 15: Анимация промаха
     const cellEl = getCellEl(enemyBoardEl, r, c);
     if (cellEl) playMissAnimation(cellEl);
   }
@@ -2714,7 +2573,6 @@ function showWinScreen(iWon) {
   Sound.stopMusic();
 
   if (iWon) {
-    // ПУНКТ 18: Эпичные эффекты при победе
     playEpicWin();
     Sound.playVictory();
     vibrate([100, 50, 100, 50, 100, 50, 300]);
@@ -2723,7 +2581,6 @@ function showWinScreen(iWon) {
     vibrate([300, 100, 300]);
   }
 
-  // Небольшая задержка, чтобы эффекты успели показаться
   setTimeout(() => {
     showOnly('winScreen');
     if (iWon) {
@@ -2768,7 +2625,6 @@ window.addEventListener('load', () => {
     if (rules) rules.style.display = 'none';
   }
 
-  // ПУНКТ 17: Запуск смены времени суток
   TimeOfDay.start();
 });
 
